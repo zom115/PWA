@@ -1,11 +1,11 @@
-const CACHE_NAME = 'pwa_cache_test'
+const cacheName = 'pwa_cache_test'
 const urlsToCache = [
   './',
   '/sw.js'
 ]
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
+    caches.open(cacheName).then(cache => {
       return cache.addAll(urlsToCache)
     })
   )
