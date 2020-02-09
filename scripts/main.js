@@ -27,6 +27,7 @@ const openDb = () => {
   const request = indexedDB.open(dbName, dbVersion)
   request.onsuccess = () => {
     db = request.result
+    displayPubList()
     console.log('openDb DONE')
   }
   request.onupgradeneeded = e => {
@@ -56,19 +57,21 @@ const clearObjectStore = (store_name) => {
   console.log('clear ...')
   const store = getObjectStore(store_name, 'readwrite')
   const request = store.clear()
-  request.onsuccess = () => console.log('cleared')
+  request.onsuccess = () => {
+    displayPubList()
+    console.log('cleared')
+  }
   request.onerror = e => {
     console.error('clearObjectStore:', e.target.errorCode)
-    displayActionFailure(request.error)
   }
 }
 const displayPubList = store => {
   if (typeof store === 'undefined') store = getObjectStore(storeName, 'readonly')
   const getFromId = store.get(materialName)
   getFromId.onsuccess = () => {
-    console.log(getFromId)
-    console.log(getFromId.result)
-    document.getElementById`main`.textContent = `${materialName}: 0`
+    const a = getFromId.result
+    const num = (a !== undefined) ? a.value : 0
+    document.getElementById`main`.textContent = `${materialName}: ${num}`
   }
 }
 const newViewerFrame = () => {}
@@ -76,34 +79,32 @@ const setInViewer = key => {}
 const addPublication = arg => {
   console.log('add ...')
   const store = getObjectStore(storeName, 'readwrite')
-  const data = {[idName]: arg}
-  let req = store.put(data)
-  req.onsuccess = () => {
-    console.log('Insertion in DB successful')
-    // displayActionSuccess()
-    // displayPubList(store)
-  }
-  req.onerror = () => {
-    console.error('addPublication error', req.error)
-    // displayActionFailure(req.error)
+  const getFromId = store.get(arg)
+  getFromId.onsuccess = () => {
+    const a = getFromId.result
+    const num = (a !== undefined) ? a.value + 1 : 1
+    const data = {[idName]: arg, value: num}
+    let req = store.put(data)
+    req.onsuccess = () => {
+      console.log('Insertion in DB successful')
+      displayPubList()
+    }
+    req.onerror = () => {
+      console.error('addPublication error', req.error)
+    }
   }
 }
 const deletePublicationFromBib = biblioid => {}
 const deletePublication = (key, store) => {}
-const displayActionSuccess = msg => {}
-const displayActionFailure = msg => {}
 const addEventListeners = msg => {
   console.log('addEventListeners')
   document.getElementById`add`.addEventListener('click', () => addPublication(materialName))
-  document.getElementById`get`.addEventListener('click', () => displayPubList())
   document.getElementById`clear`.addEventListener('click', () => clearObjectStore(storeName))
   document.getElementById`deleteDb`.addEventListener('click', () => deleteDb())
 }
 let openTime = Date.now()
 document.getElementById`timeReset`.addEventListener('click', () => openTime = Date.now())
 const main = () => {
-  // document.getElementById`main`.insertAdjacentHTML('afterend', '<p>a</p>')
-  // document.getElementById`main`.innerHTML = '<p>a</p>'
   const connectedTime = Date.now() - openTime
   const mm = ('0' + Math.floor(connectedTime / 6e4)).slice(-2)
   const ss = ('0' + Math.floor(connectedTime % 6e4 / 1e3)).slice(-2)
