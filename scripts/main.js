@@ -19,7 +19,6 @@ const dbVersion = 1
 const storeName  = 'sampleStore'
 const idName = 'sampleId'
 const materialName = 'crude'
-let count = 0
 // let inventory = []
 let db
 const openDb = () => {
@@ -96,23 +95,59 @@ const addPublication = arg => {
 }
 const deletePublicationFromBib = biblioid => {}
 const deletePublication = (key, store) => {}
+const countLimit = 10 * 1e3
+const coolTimeLimit = 250
+let getTime = 0
+let materialValue = 0
+let takeFlag = false
 const addEventListeners = msg => {
   console.log('addEventListeners')
   document.getElementById`add`.addEventListener('click', () => addPublication(materialName))
   document.getElementById`clear`.addEventListener('click', () => clearObjectStore(storeName))
   document.getElementById`deleteDb`.addEventListener('click', () => deleteDb())
+  document.getElementById`testButton`.addEventListener('click', e => {
+    e.target.disabled = true
+    getTime = Date.now()
+  })
+}
+const materialProcess = () => {
+  if (getTime !== 0) {
+    let elapsedTime = Date.now() - getTime
+    let rate = elapsedTime / countLimit
+    if (countLimit <= elapsedTime) {
+      if (!takeFlag) {
+        materialValue += 1
+        takeFlag = true
+      }
+      rate = (coolTimeLimit - (elapsedTime - countLimit)) / coolTimeLimit
+      if (countLimit + coolTimeLimit <= elapsedTime) {
+        document.getElementById`testButton`.disabled = false
+        getTime = 0
+        takeFlag = false
+      }
+    }
+    document.getElementById`testText`.textContent = `${materialName}:`
+    document.getElementById`testValue`.textContent = materialValue
+    document.getElementById`testButton`.textContent = 'Cost: 10s'
+    document.getElementById`progress`.value = rate
+    document.getElementById`testTime`.textContent = countLimit <= elapsedTime ? ''
+    : formatTime(countLimit - elapsedTime)
+  }
 }
 let openTime = Date.now()
 document.getElementById`timeReset`.addEventListener('click', () => openTime = Date.now())
-const main = () => {
-  const connectedTime = Date.now() - openTime
-  const mm = ('0' + Math.floor(connectedTime / 6e4)).slice(-2)
-  const ss = ('0' + Math.floor(connectedTime % 6e4 / 1e3)).slice(-2)
-  const ms = ('00' + connectedTime % 1e3).slice(-3)
+const formatTime = argTime => {
+  const mm = ('0' + Math.floor(argTime / 6e4)).slice(-2)
+  const ss = ('0' + Math.floor(argTime % 6e4 / 1e3)).slice(-2)
+  const ms = ('00' + argTime % 1e3).slice(-3)
   let time = ms
   if (0 < mm || 0 < ss) time = ss + ':' + time
   if (0 < mm) time = mm + ':' + time
-  document.getElementById`conectedTime`.textContent = time
+  return time
+}
+const main = () => {
+  materialProcess()
+  document.getElementById`conectedTime`.textContent = formatTime(Date.now() - openTime)
   window.requestAnimationFrame(main)
 }
 openDb()
