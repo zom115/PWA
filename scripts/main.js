@@ -1,4 +1,4 @@
-'use strict'
+{'use strict'
 const path = 'scripts/sw.js'
 navigator.serviceWorker.register(path)
 if ('serviceWorker' in navigator) {
@@ -10,16 +10,39 @@ if ('serviceWorker' in navigator) {
     })
   })
 }
-/*
-  onupgradeneeded: DBのバージョン更新(DBの新規作成も含む)時のみ実行
-  onsuccess: onupgradeneededの後に実行。更新がない場合はこれだけ実行
-*/
 const dbName = 'sampleDB'
 const dbVersion = 1
-const storeName  = 'sampleStore'
+const storeName = 'sampleStore'
 const idName = 'sampleId'
 const materialName = 'crude'
-// let inventory = []
+// const materialList = {
+//   tank: {name: 'tank'},
+//   engine: {name: 'generator engine'},
+//   rig: {name: 'rig'}
+// }
+// Object.keys(materialList).forEach(v => {
+//   console.log(materialList[v].name)
+// })
+{
+  const createE = (e, c, i = '', t = '', a) => {
+    const element = document.createElement(e)
+    element.className = c
+    element.id = i
+    element.textContent = t
+    if (a !== undefined) a.appendChild(element)
+    return element
+  }
+  const div = createE('div', 'cell', 'material')
+  const top = createE('div', 'container', '', '', div)
+  createE('span', '', 'name', '[name]', top)
+  createE('span', '', 'value', '[num]', top)
+  const middle = createE('div', 'container', '', '', div)
+  createE('button', '', 'button', '[cost: 0]', middle)
+  createE('span','','time', '[00:00]', middle)
+  const bottom = createE('div', 'container', '', '', div)
+  createE('progress', '', 'progressbar', '', bottom)
+  document.getElementById`column`.appendChild(div)
+}
 const countLimit = 10 * 1e3
 const coolTimeLimit = 250
 let getTime = 0
@@ -39,12 +62,12 @@ const openDb = () => {
   }
   request.onerror = e => console.log('openDb:', e.target.errorCode)
 }
-const deleteDb = () => {
+const deleteDb = (bool = true) => {
   console.log('deleteDb ...')
   const deleteRequest = indexedDB.deleteDatabase(dbName)
   deleteRequest.onsuccess = () => {
     console.log('delete DB success')
-    openDb()
+    if (bool) openDb()
   }
   deleteRequest.onblocked = () => {
     console.log('delete DB blocked')
@@ -105,6 +128,7 @@ const addEventListeners = msg => {
   // document.getElementById`add`.addEventListener('click', () => addPublication(materialName))
   document.getElementById`clear`.addEventListener('click', () => clearObjectStore(storeName))
   document.getElementById`deleteDb`.addEventListener('click', () => deleteDb())
+  document.getElementById`deleteDev`.addEventListener('click', () => deleteDb(false))
   document.getElementById`testButton`.addEventListener('click', e => {
     e.target.disabled = true
     getTime = Date.now()
@@ -150,3 +174,4 @@ const main = () => {
 openDb()
 addEventListeners()
 main()
+}
