@@ -1,1 +1,23 @@
-table { border-top: 1px solid #999; }
+body {margin: .3rem}
+.cell {
+  border-left: .01rem solid gray;
+  padding-left: .3rem;
+}
+.container {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  min-height: 1.5rem;
+}
+progress::-webkit-progress-bar {
+  background-color: lightgrey;
+}
+progress::-webkit-progress-value {
+  background-color: lightseagreen;
+}
+progress {
+  -webkit-appearance: none;
+  height: .2rem;
+  vertical-align: 0;
+  width: 100%;
+}

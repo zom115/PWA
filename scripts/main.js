@@ -20,6 +20,10 @@ const storeName  = 'sampleStore'
 const idName = 'sampleId'
 const materialName = 'crude'
 // let inventory = []
+const countLimit = 10 * 1e3
+const coolTimeLimit = 250
+let getTime = 0
+let takeFlag = false
 let db
 const openDb = () => {
   console.log('openDb ...')
@@ -69,12 +73,15 @@ const displayPubList = store => {
   const getFromId = store.get(materialName)
   getFromId.onsuccess = () => {
     const a = getFromId.result
-    const num = (a !== undefined) ? a.value : 0
-    document.getElementById`main`.textContent = `${materialName}: ${num}`
+    const materialValue = (a !== undefined) ? a.value : 0
+    // document.getElementById`main`.textContent = `${materialName}: ${materialValue}`
+    document.getElementById`testText`.textContent = `${materialName}:`
+    document.getElementById`testValue`.textContent = materialValue
+    document.getElementById`testButton`.textContent = 'Cost: 10s'
+    document.getElementById`progress`.value = 0
+    document.getElementById`testTime`.textContent = ''
   }
 }
-const newViewerFrame = () => {}
-const setInViewer = key => {}
 const addPublication = arg => {
   console.log('add ...')
   const store = getObjectStore(storeName, 'readwrite')
@@ -93,16 +100,9 @@ const addPublication = arg => {
     }
   }
 }
-const deletePublicationFromBib = biblioid => {}
-const deletePublication = (key, store) => {}
-const countLimit = 10 * 1e3
-const coolTimeLimit = 250
-let getTime = 0
-let materialValue = 0
-let takeFlag = false
 const addEventListeners = msg => {
   console.log('addEventListeners')
-  document.getElementById`add`.addEventListener('click', () => addPublication(materialName))
+  // document.getElementById`add`.addEventListener('click', () => addPublication(materialName))
   document.getElementById`clear`.addEventListener('click', () => clearObjectStore(storeName))
   document.getElementById`deleteDb`.addEventListener('click', () => deleteDb())
   document.getElementById`testButton`.addEventListener('click', e => {
@@ -116,7 +116,7 @@ const materialProcess = () => {
     let rate = elapsedTime / countLimit
     if (countLimit <= elapsedTime) {
       if (!takeFlag) {
-        materialValue += 1
+        addPublication(materialName)
         takeFlag = true
       }
       rate = (coolTimeLimit - (elapsedTime - countLimit)) / coolTimeLimit
@@ -126,9 +126,6 @@ const materialProcess = () => {
         takeFlag = false
       }
     }
-    document.getElementById`testText`.textContent = `${materialName}:`
-    document.getElementById`testValue`.textContent = materialValue
-    document.getElementById`testButton`.textContent = 'Cost: 10s'
     document.getElementById`progress`.value = rate
     document.getElementById`testTime`.textContent = countLimit <= elapsedTime ? ''
     : formatTime(countLimit - elapsedTime)
