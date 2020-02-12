@@ -10,6 +10,7 @@
   min-height: 1.5rem;
 }
 body {margin: .3rem}
+button {min-width: 1.5rem;}
 html {overflow-y: scroll}
 progress::-webkit-progress-bar {
   background-color: whitesmoke;

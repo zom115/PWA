@@ -17,17 +17,29 @@ const idName = 'site'
 let localBuffer = {[storeName[0]]: []}
 const site = localBuffer[storeName[0]]
 // const materialName = 'crude'
-let firstBuildingArray = [{
-    name: 'Storage Tank',
-    output: 1
-  }, {
-    name: 'Generator Engine',
-    output: 2
-  }, {
-    name: 'Rig',
-    output: 0
-  }
-]
+const buildingList = {
+  'Storage Tank': {acceptor: ['Storage Tank', 'Rig']},
+  'Generator Engine': {acceptor: ['Storage Tank', 'Rig']},
+  'Rig': {acceptor: ['Generator Engine']}
+}
+Object.keys(buildingList).forEach(v => {
+  buildingList[v].acceptable = []
+  Object.keys(buildingList).forEach(val => {
+    if (buildingList[val].acceptor.some(value => v === value)) {
+      buildingList[v].acceptable.push(val)
+    }
+  })
+})
+const firstBuildingArray = [{
+  name: 'Storage Tank',
+  output: 0
+}, {
+  name: 'Generator Engine',
+  output: 2
+}, {
+  name: 'Rig',
+  output: 0
+}]
 // const countLimit = 10 * 1e3
 // const coolTimeLimit = 250
 // let getTime = 0
@@ -73,12 +85,9 @@ const initializeDb = () => {
   const store = getObjectStore(storeName[0], 'readwrite')
   firstBuildingArray.forEach((v, i) => {
     v[idName] = i
-    const getFromId = store.get(v[idName])
-    getFromId.onsuccess = () => {
-      const req = store.put(firstBuildingArray[i])
-      req.onsuccess = () => {'initialize DB success'}
-      req.onerror = () => console.error('initialize DB error', req.error)
-    }
+    const req = store.put(firstBuildingArray[i])
+    req.onsuccess = () => {'initialize DB success'}
+    req.onerror = () => console.error('initialize DB error', req.error)
   })
 }
 const getObjectStore = (store_name, mode) => {
@@ -97,16 +106,25 @@ const getObjectStore = (store_name, mode) => {
 //     console.error('clearObjectStore:', e.target.errorCode)
 //   }
 // }
+const rewriteOutput = (former, i) => {
+  // local list update
+  site[former].output = i
+  // db update
+  putData(former)
+  // element update
+  document.getElementById(`output-${former}`).textContent = `${i} ${site[i].name}`
+}
 const generateColumn = (v, num) => {
   const createE = (e, c, i = '', t = '', a) => {
     const element = document.createElement(e)
-    element.className = c
-    element.id = i
+    if (c !== '') element.className = c
+    if (i !== '') element.id = i
     element.textContent = t
     if (a !== undefined) a.appendChild(element)
     return element
   }
-  const div = createE('div', 'cell', '', '', document.getElementById`column`)
+  const column = document.getElementById`column`
+  const div = createE('div', 'cell', '', '', column)
   const top = createE('div', 'container', '', '', div)
   createE('progress', '', `progressbar-${num}`, '', top)
   const middle = createE('div', 'container', '', '', div)
@@ -114,17 +132,46 @@ const generateColumn = (v, num) => {
   createE('span', '', `state-${num}`, '', middle)
   const bottom = createE('div', 'container', '', '', div)
   createE('span','',`time-${num}`, '', bottom)
-  const button = createE('button', '', `button-${num}`, '+', bottom)
+  const detailButton = createE('button', '', `button-${num}`, '+', bottom)
   const detail = createE('div', 'container', `detail-${num}`, '', div)
   createE('span', '', '', 'Output', detail)
-  createE('span', '', '', `${v.output}: ${v.outputName}`, detail)
-  const dummy1 = createE('div', 'container', '', '', div)
-  createE('span', '', '', v.name, dummy1)
-  const list = [detail, dummy1]
-  list.forEach(v => v.style.display = 'none')
-  button.addEventListener('click', () => {
-    button.textContent = button.textContent === '+' ? '-' : '+'
-    list.forEach(v => v.style.display = v.style.display === 'none' ? 'flex' : 'none')
+  createE('span', '', `output-${num}`, `${v.output} ${site[v.output].name}`, detail)
+  const outputButton = createE('button', '', '', '+', detail)
+  const outputCell = createE('div', 'cell', '', '', div)
+  let outputList = []
+  let outputButtonList = []
+  buildingList[v.name].acceptable.forEach(val => {
+    site.forEach((value, index) => {
+      if (val === value.name) {
+        const accc = createE('div', 'container', '', '', outputCell)
+        outputList.push(accc)
+        createE('span', '', '', `${index} ${val}`, accc)
+        const button = createE('button', '', `output-${num}-${index}`, '->', accc)
+        outputButtonList.push(button)
+        button.addEventListener('click', () => {
+          rewriteOutput(num, index)
+          outputButtonList.forEach(v => v.style.display = 'flex')
+          button.style.display = 'none'
+        })
+        if (v.output === index) button.style.display = 'none'
+      }
+    })
+  })
+  const dummy1 = createE('div', 'container', 'end', '', div)
+  createE('span', '', '', 'End', dummy1)
+  let detailList = [detail, dummy1]
+  detailList.forEach(v => v.style.display = 'none')
+  outputList.forEach(v => v.style.display = 'none')
+  detailButton.addEventListener('click', () => {
+    detailButton.textContent = detailButton.textContent === '+' ? '-' : '+'
+    detailList.forEach(v => v.style.display = v.style.display === 'none' ? 'flex' : 'none')
+    if (outputButton.textContent === '-') {
+      outputList.forEach(v => v.style.display = v.style.display === 'none' ? 'flex' : 'none')
+    }
+  })
+  outputButton.addEventListener('click', () => {
+    outputButton.textContent = outputButton.textContent === '+' ? '-' : '+'
+    outputList.forEach(v => v.style.display = v.style.display === 'none' ? 'flex' : 'none')
   })
 }
 const displayColumn = () => {
@@ -136,13 +183,15 @@ const displayColumn = () => {
       site.push(cursor.value)
       cursor.continue()
     } else {
-      site.forEach((v, i) => {
-        site[i].outputName = site[v.output].name
-        if (cursor === null) generateColumn(v, i)
-      })
+      site.forEach((v, i) => generateColumn(v, i))
     }
-    console.log(site)
   }
+}
+const putData = id => {
+  console.log('put ...')
+  const store = getObjectStore(storeName[0], 'readwrite')
+  const req = store.put(site[id])
+  req.onsuccess = () => {console.log('put success')}
 }
 // const addPublication = arg => {
 //   console.log('add ...')
@@ -200,10 +249,6 @@ const addEventListeners = msg => {
   document.getElementById`deleteDb`.addEventListener('click', () => deleteDb())
   document.getElementById`deleteDev`.addEventListener('click', () => deleteDb(false))
 }
-const findId = () => {
-  if (document.getElementById`deleteDb`) console.log('found!!')
-  else console.log('not found')
-}
 const main = () => {
   // materialProcess()
   document.getElementById`conectedTime`.textContent = formatTime(Date.now() - openTime)
@@ -211,6 +256,5 @@ const main = () => {
 }
 openDb()
 addEventListeners()
-findId()
 main()
 }
