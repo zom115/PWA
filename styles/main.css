@@ -1,6 +1,6 @@
 .cell {
   margin: .6rem 0;
-  border-left: .01rem solid gray;
+  border-left: .01rem solid lightgray;
   padding-left: .3rem;
 }
 .container {
@@ -12,7 +12,7 @@
 body {margin: .3rem}
 html {overflow-y: scroll}
 progress::-webkit-progress-bar {
-  background-color: lightgrey;
+  background-color: whitesmoke;
 }
 progress::-webkit-progress-value {
   background-color: lightseagreen;
