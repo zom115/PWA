@@ -18,9 +18,28 @@ let localBuffer = {[storeName[0]]: []}
 const site = localBuffer[storeName[0]]
 // const materialName = 'crude'
 const buildingList = {
-  'Storage Tank': {acceptor: ['Storage Tank', 'Rig']},
-  'Generator Engine': {acceptor: ['Storage Tank', 'Rig']},
-  'Rig': {acceptor: ['Generator Engine']}
+  'Storage Tank': {
+    acceptor: ['Storage Tank', 'Rig'],
+    conversion: [{
+      from: 'crude',
+      to: 'crude',
+      efficiency: 1
+    }]
+  }, 'Generator Engine': {
+    acceptor: ['Storage Tank', 'Rig'],
+    conversion: [{
+      from: 'crude',
+      to: 'eu',
+      efficiency: 2
+    }]
+  }, 'Rig': {
+    acceptor: ['Generator Engine'],
+    conversion: [{
+      from: 'eu',
+      to: 'crude',
+      efficiency: 1
+    }]
+  }
 }
 Object.keys(buildingList).forEach(v => {
   buildingList[v].acceptable = []
@@ -133,20 +152,21 @@ const generateColumn = (v, num) => {
   const bottom = createE('div', 'container', '', '', div)
   createE('span','',`time-${num}`, '', bottom)
   const detailButton = createE('button', '', `button-${num}`, '+', bottom)
-  const detail = createE('div', 'container', `detail-${num}`, '', div)
-  createE('span', '', '', 'Output', detail)
-  createE('span', '', `output-${num}`, `${v.output} ${site[v.output].name}`, detail)
-  const outputButton = createE('button', '', '', '+', detail)
-  const outputCell = createE('div', 'cell', '', '', div)
+  const outputCell = createE('div', 'cell', `detail-${num}`, '', div)
+  const outputContainer = createE('div', 'container', '', '', outputCell)
+  createE('span', '', '', 'Output', outputContainer)
+  createE(
+    'span', '', `output-${num}`, `${v.output} ${site[v.output].name}`, outputContainer)
+  const outputButton = createE('button', '', '', '+', outputContainer)
   let outputList = []
   let outputButtonList = []
   buildingList[v.name].acceptable.forEach(val => {
     site.forEach((value, index) => {
       if (val === value.name) {
-        const accc = createE('div', 'container', '', '', outputCell)
-        outputList.push(accc)
-        createE('span', '', '', `${index} ${val}`, accc)
-        const button = createE('button', '', `output-${num}-${index}`, '->', accc)
+        const outputColumn = createE('div', 'container', '', '', div)
+        outputList.push(outputColumn)
+        createE('span', '', '', `${index} ${val}`, outputColumn)
+        const button = createE('button', '', `output-${num}-${index}`, '->', outputColumn)
         outputButtonList.push(button)
         button.addEventListener('click', () => {
           rewriteOutput(num, index)
@@ -157,21 +177,41 @@ const generateColumn = (v, num) => {
       }
     })
   })
-  const dummy1 = createE('div', 'container', 'end', '', div)
+  const conversionCell = createE('div', 'cell', '', '', div)
+  const conversionContainer = createE('div', 'container', '', '', conversionCell)
+  createE('span', '', '', 'Conversion Information', conversionContainer)
+  const conversionButton = createE('button', '', '', '+', conversionContainer)
+  let conversionList = []
+  buildingList[v.name].conversion.forEach(val => {
+    const conversion = createE('div', 'container', '', '', div)
+    conversionList.push(conversion)
+    createE('span', '', '', `1 ${val.from} → ${val.efficiency} ${val.to}`, conversion)
+  })
+  const dummy1 = createE('div', 'cell', 'end', '', div)
   createE('span', '', '', 'End', dummy1)
-  let detailList = [detail, dummy1]
-  detailList.forEach(v => v.style.display = 'none')
+  const cellList = [outputCell, conversionCell, dummy1]
+  cellList.forEach(v => v.style.display = 'none')
   outputList.forEach(v => v.style.display = 'none')
+  conversionList.forEach(v => v.style.display = 'none')
+  const buttonList = [outputButton, conversionButton]
+  const constList = [outputList, conversionList]
+
   detailButton.addEventListener('click', () => {
     detailButton.textContent = detailButton.textContent === '+' ? '-' : '+'
-    detailList.forEach(v => v.style.display = v.style.display === 'none' ? 'flex' : 'none')
-    if (outputButton.textContent === '-') {
-      outputList.forEach(v => v.style.display = v.style.display === 'none' ? 'flex' : 'none')
-    }
+    cellList.forEach(v => v.style.display = v.style.display === 'none' ? 'flex' : 'none')
+    buttonList.forEach((v, i) => {
+      if (v.textContent === '-') {
+        constList[i].forEach(
+          val => val.style.display = val.style.display === 'none' ? 'flex' : 'none')
+      }
+    })
   })
-  outputButton.addEventListener('click', () => {
-    outputButton.textContent = outputButton.textContent === '+' ? '-' : '+'
-    outputList.forEach(v => v.style.display = v.style.display === 'none' ? 'flex' : 'none')
+  buttonList.forEach((v, i) => {
+    v.addEventListener('click', () => {
+      v.textContent = v.textContent === '+' ? '-' : '+'
+      constList[i].forEach(
+        val => val.style.display = val.style.display === 'none' ? 'flex' : 'none')
+    })
   })
 }
 const displayColumn = () => {
