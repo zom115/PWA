@@ -216,6 +216,17 @@ const generateColumn = (v, num) => {
       }
     })
   })
+  const sendUnit = createE('div', 'unit', '', '', div)
+  const sendContainer = createE('div', 'container', '', '', sendUnit)
+  createE('span', '', '', 'Send Amount', sendContainer)
+  const sendIndicator = createE('span', '', '', v.transmitter.amount, sendContainer)
+  const inputElement = createE('input', '', `input-${num}`, '', div)
+  inputElement.type = 'range'
+  inputElement.step = 1
+  inputElement.min = 1
+  inputElement.max = v.transmitter.amount
+  inputElement.value = v.transmitter.amount
+  inputElement.addEventListener('input', e => sendIndicator.textContent = e.target.value)
   const conversionUnit = createE('div', 'unit', '', '', div)
   const conversionContainer = createE('div', 'container', '', '', conversionUnit)
   createE('span', '', '', 'Conversion Information', conversionContainer)
@@ -232,6 +243,8 @@ const generateColumn = (v, num) => {
     transmitterUnit,
     transmitterBar,
     outputUnit,
+    sendUnit,
+    inputElement,
     conversionUnit
   ]
   unitList.forEach(v => v.style.display = 'none')

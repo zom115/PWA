@@ -13,6 +13,7 @@
 body {margin: .3rem}
 button {min-width: 1.5rem;}
 html {overflow-y: scroll}
+input {width: 100%;}
 progress::-webkit-progress-bar {
   background-color: whitesmoke;
 }
