@@ -16,27 +16,27 @@ const storeName = ['site', 'market', 'statistics', 'setting']
 const idName = 'site'
 let localBuffer = {[storeName[0]]: []}
 const site = localBuffer[storeName[0]]
-// const materialName = 'crude'
+// const materialName = 'Crude'
 const buildingList = {
   'Storage Tank': {
     acceptor: ['Storage Tank', 'Rig'],
     conversion: [{
-      from: 'crude',
-      to: 'crude',
+      from: 'Crude',
+      to: 'Crude',
       efficiency: 1
     }]
   }, 'Generator Engine': {
     acceptor: ['Storage Tank', 'Rig'],
     conversion: [{
-      from: 'crude',
-      to: 'eu',
+      from: 'Crude',
+      to: 'EU',
       efficiency: 2
     }]
   }, 'Rig': {
     acceptor: ['Generator Engine'],
     conversion: [{
-      from: 'eu',
-      to: 'crude',
+      from: 'EU',
+      to: 'Crude',
       efficiency: 1
     }]
   }
@@ -58,7 +58,7 @@ const firstBuildingArray = [{
     amount: 0
   }, transmitter: {
     limit: 32,
-    content: 'crude',
+    content: 'Crude',
     amount: 8
   }
 }, {
@@ -179,7 +179,6 @@ const generateColumn = (v, num) => {
   const bottom = createE('div', 'container', '', '', div)
   createE('span','',`time-${num}`, '', bottom)
   const detailButton = createE('button', '', `button-${num}`, '+', bottom)
-
   const receiverUnit = createE('div', 'unit', '', '', div)
   const receiverContainer = createE('div', 'container', '', '', receiverUnit)
   createE('span', '', '', 'Receiver', receiverContainer)
@@ -192,7 +191,6 @@ const generateColumn = (v, num) => {
   createE('span', '', '', v.transmitter.content, transmitterContainer)
   createE('span', '', '', `${v.transmitter.amount} / ${v.transmitter.limit}`, transmitterContainer)
   const transmitterBar = createE('progress', '', `transmitterbar-${num}`, '', div)
-
   const outputUnit = createE('div', 'unit', `detail-${num}`, '', div)
   const outputContainer = createE('div', 'container', '', '', outputUnit)
   createE('span', '', '', 'Output', outputContainer)
@@ -226,7 +224,7 @@ const generateColumn = (v, num) => {
   buildingList[v.name].conversion.forEach(val => {
     const conversion = createE('div', 'container', '', '', div)
     conversionList.push(conversion)
-    createE('span', '', '', `1 ${val.from} → ${val.efficiency} ${val.to}`, conversion)
+    createE('span', '', '', `1 ${val.from} -> ${val.efficiency} ${val.to}`, conversion)
   })
   const unitList = [
     receiverUnit,
