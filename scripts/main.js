@@ -15,10 +15,13 @@ const dbVersion = 1
 const storeName = ['site', 'market', 'statistics', 'setting']
 const idName = 'site'
 const materialName = 'crude'
-let firstBuildingArray = [
-  {name: 'Storage Tank'},
-  {name: 'Generator Engine'},
-  {name: 'Rig'}
+let firstBuildingArray = [{
+    name: 'Storage Tank'
+  }, {
+    name: 'Generator Engine'
+  }, {
+    name: 'Rig'
+  }
 ]
 let referenceLimit = 3
 const countLimit = 10 * 1e3
@@ -53,7 +56,7 @@ const deleteDb = (bool = true) => {
   }
   deleteRequest.onerror = () => console.log('delete DB error')
 }
-const dbInitialize = () => {
+const initializeDb = () => {
   console.log('initialize ...')
   document.getElementById`column`.textContent = null
   const store = getObjectStore(storeName[0], 'readwrite')
@@ -124,30 +127,12 @@ const displayColumn = () => {
       const r = getFromId.result
       if (r === undefined) {
         if (i === 0) {
-          dbInitialize()
+          initializeDb()
           displayColumn()
         }
       } else generateColumn(r, i)
     }
   }
-  // categoryList.forEach(v => {
-  //   const getFromId = store.get(v)
-  //   getFromId.onsuccess = () => {
-  //     const r = getFromId.result
-  //     if (v === categoryList[0]) {
-  //       if (r === undefined) {
-  //         dbInitialize()
-  //         displayColumn()
-  //       } else r.content.forEach((v, i) => generateColumn(v, i))
-  //     }
-      // const materialValue = (a !== undefined) ? a.value : 0
-      // document.getElementById`testText`.textContent = `${a[idName]}:`
-      // document.getElementById`testValue`.textContent = materialValue
-      // document.getElementById`testButton`.textContent = 'Cost: 10s'
-      // document.getElementById`progress`.value = 0
-      // document.getElementById`testTime`.textContent = ''
-  //   }
-  // })
 }
 const getObject = arg => {
   const store = getObjectStore(storeName[0], 'readwrite')
@@ -224,14 +209,9 @@ const formatTime = argTime => {
 }
 const addEventListeners = msg => {
   console.log('addEventListeners')
-  // document.getElementById`add`.addEventListener('click', () => addPublication(materialName))
   // document.getElementById`clear`.addEventListener('click', () => clearObjectStore(storeName))
   document.getElementById`deleteDb`.addEventListener('click', () => deleteDb())
   document.getElementById`deleteDev`.addEventListener('click', () => deleteDb(false))
-  // document.getElementById`testButton`.addEventListener('click', e => {
-  //   e.target.disabled = true
-  //   getTime = Date.now()
-  // })
 }
 const main = () => {
   // materialProcess()
