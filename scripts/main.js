@@ -51,13 +51,40 @@ Object.keys(buildingList).forEach(v => {
 })
 const firstBuildingArray = [{
   name: 'Storage Tank',
-  output: 0
+  output: 0,
+  receiver: {
+    limit: 8,
+    content: '',
+    amount: 0
+  }, transmitter: {
+    limit: 32,
+    content: 'crude',
+    amount: 8
+  }
 }, {
   name: 'Generator Engine',
-  output: 2
+  output: 2,
+  receiver: {
+    limit: 4,
+    content: '',
+    amount: 0
+  }, transmitter: {
+    limit: 16,
+    content: '',
+    amount: 0
+  }
 }, {
   name: 'Rig',
-  output: 0
+  output: 0,
+  receiver: {
+    limit: 2,
+    content: '',
+    amount: 0
+  }, transmitter: {
+    limit: 8,
+    content: '',
+    amount: 0
+  }
 }]
 // const countLimit = 10 * 1e3
 // const coolTimeLimit = 250
@@ -143,17 +170,31 @@ const generateColumn = (v, num) => {
     return element
   }
   const column = document.getElementById`column`
-  const div = createE('div', 'cell', '', '', column)
+  const div = createE('div', 'unit', '', '', column)
   const top = createE('div', 'container', '', '', div)
-  createE('progress', '', `progressbar-${num}`, '', top)
+  createE('span', '', `site-${num}`, `${num} ${v.name}`, top)
+  createE('span', '', `state-${num}`, '', top)
   const middle = createE('div', 'container', '', '', div)
-  createE('span', '', `site-${num}`, `${num} ${v.name}`, middle)
-  createE('span', '', `state-${num}`, '', middle)
+  createE('progress', '', `progressbar-${num}`, '', middle)
   const bottom = createE('div', 'container', '', '', div)
   createE('span','',`time-${num}`, '', bottom)
   const detailButton = createE('button', '', `button-${num}`, '+', bottom)
-  const outputCell = createE('div', 'cell', `detail-${num}`, '', div)
-  const outputContainer = createE('div', 'container', '', '', outputCell)
+
+  const receiverUnit = createE('div', 'unit', '', '', div)
+  const receiverContainer = createE('div', 'container', '', '', receiverUnit)
+  createE('span', '', '', 'Receiver', receiverContainer)
+  createE('span', '', '', v.receiver.content, receiverContainer)
+  createE('span', '', '', `${v.receiver.amount} / ${v.receiver.limit}`, receiverContainer)
+  const receiverBar = createE('progress', '', `receiverbar-${num}`, '', div)
+  const transmitterUnit = createE('div', 'unit', '', '', div)
+  const transmitterContainer = createE('div', 'container', '', '', transmitterUnit)
+  createE('span', '', '', 'Transmitter', transmitterContainer)
+  createE('span', '', '', v.transmitter.content, transmitterContainer)
+  createE('span', '', '', `${v.transmitter.amount} / ${v.transmitter.limit}`, transmitterContainer)
+  const transmitterBar = createE('progress', '', `transmitterbar-${num}`, '', div)
+
+  const outputUnit = createE('div', 'unit', `detail-${num}`, '', div)
+  const outputContainer = createE('div', 'container', '', '', outputUnit)
   createE('span', '', '', 'Output', outputContainer)
   createE(
     'span', '', `output-${num}`, `${v.output} ${site[v.output].name}`, outputContainer)
@@ -177,8 +218,8 @@ const generateColumn = (v, num) => {
       }
     })
   })
-  const conversionCell = createE('div', 'cell', '', '', div)
-  const conversionContainer = createE('div', 'container', '', '', conversionCell)
+  const conversionUnit = createE('div', 'unit', '', '', div)
+  const conversionContainer = createE('div', 'container', '', '', conversionUnit)
   createE('span', '', '', 'Conversion Information', conversionContainer)
   const conversionButton = createE('button', '', '', '+', conversionContainer)
   let conversionList = []
@@ -187,10 +228,15 @@ const generateColumn = (v, num) => {
     conversionList.push(conversion)
     createE('span', '', '', `1 ${val.from} → ${val.efficiency} ${val.to}`, conversion)
   })
-  const dummy1 = createE('div', 'cell', 'end', '', div)
-  createE('span', '', '', 'End', dummy1)
-  const cellList = [outputCell, conversionCell, dummy1]
-  cellList.forEach(v => v.style.display = 'none')
+  const unitList = [
+    receiverUnit,
+    receiverBar,
+    transmitterUnit,
+    transmitterBar,
+    outputUnit,
+    conversionUnit
+  ]
+  unitList.forEach(v => v.style.display = 'none')
   outputList.forEach(v => v.style.display = 'none')
   conversionList.forEach(v => v.style.display = 'none')
   const buttonList = [outputButton, conversionButton]
@@ -198,7 +244,7 @@ const generateColumn = (v, num) => {
 
   detailButton.addEventListener('click', () => {
     detailButton.textContent = detailButton.textContent === '+' ? '-' : '+'
-    cellList.forEach(v => v.style.display = v.style.display === 'none' ? 'flex' : 'none')
+    unitList.forEach(v => v.style.display = v.style.display === 'none' ? 'flex' : 'none')
     buttonList.forEach((v, i) => {
       if (v.textContent === '-') {
         constList[i].forEach(
