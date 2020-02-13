@@ -73,6 +73,7 @@ const firstBuildingArray = [{
   value: 0,
   timestamp: 0
 }]
+const distanceWeightTime = 1e3
 let db
 let initializeFlag = false
 const openDb = () => {
@@ -302,14 +303,18 @@ const rewriteConvert = targetSite => {
   // local list update
   const out = site[targetSite.output]
   buildingList[targetSite.name].conversion.forEach(v => {
+    const time = Math.abs(
+      targetSite.site - site[targetSite.output].site) * distanceWeightTime
     if (
-      v.from === targetSite.content &&
-      0 < targetSite.amount &&
-      out.amount + v.efficiency * 1 <= out.capacity
+      v.from === targetSite.content && 0 < targetSite.amount &&
+      out.amount + v.efficiency * 1 <= out.capacity && time !== 0
     ) {
-      targetSite.amount -= 1
-      out.content = v.to
-      out.amount += v.efficiency * 1
+      if (targetSite.timestamp + time <= Date.now()) {
+        targetSite.amount -= 1
+        out.content = v.to
+        out.amount += v.efficiency * 1
+        targetSite.timestamp += time
+      }
     } else {
       targetSite.timestamp = 0
       document.getElementById(`checkbox-${targetSite.site}`).checked = false
