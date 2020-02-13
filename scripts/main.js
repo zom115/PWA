@@ -14,7 +14,7 @@ const dbName = 'indexedDB'
 const dbVersion = 1
 const storeName = ['site', 'market', 'statistics', 'setting']
 const idName = 'site'
-let localBuffer = {[storeName[0]]: []}
+const localBuffer = {[storeName[0]]: []}
 const site = localBuffer[storeName[0]]
 const buildingList = {
   'Storage Tank': {
@@ -129,6 +129,18 @@ const getObjectStore = (store_name, mode) => {
   const tx = db.transaction(store_name, mode)
   return tx.objectStore(store_name)
 }
+const getDb = () => {
+  const store = getObjectStore(storeName[0], 'readonly')
+  store.openCursor().onsuccess = async e => {
+    const cursor = e.target.result
+    if (cursor) {
+      console.log(cursor.value)
+      cursor.continue()
+    } else {
+      console.log('end')
+    }
+  }
+}
 // const clearObjectStore = (store_name) => {
 //   console.log('clear ...')
 //   const store = getObjectStore(store_name, 'readwrite')
@@ -148,6 +160,15 @@ const rewriteOutput = (former, i) => {
   putData(site[former])
   // element update
   document.getElementById(`output-${former}`).textContent = `${i} ${site[i].name}`
+}
+const rewriteLine = (former, i) => {
+  console.log('rewrite line')
+  site.splice(i, 0, site.splice(former, 1)[0])
+  site.forEach((v, i) => {
+    v.site = i
+    putData(v)
+  })
+  displayColumn()
 }
 const generateColumn = (v, num) => {
   const createE = (e, c, i = '', t = '', a) => {
@@ -202,6 +223,7 @@ const generateColumn = (v, num) => {
       }
     })
   })
+  /*
   const sendBox = createE('div', 'box', '', '', div)
   const sendContainer = createE('div', 'container', '', '', sendBox)
   createE('span', '', '', 'Send Amount', sendContainer)
@@ -215,6 +237,35 @@ const generateColumn = (v, num) => {
   inputElement.addEventListener('input', e => {
     v.value = sendIndicator.textContent = e.target.value
   })
+  */
+  const sortingBox = createE('div', 'box', '', '', div)
+  const sortingContainer = createE('div', 'container', '', '', sortingBox)
+  const sortingExpandButton = createE('button', '', '', '+', sortingContainer)
+  let sortingList = []
+  let sortingButtonList = []
+  createE('span', '', '', 'Sorting', sortingContainer)
+  site.forEach((v, i) => {
+    const sortingColumn = createE('div', 'container', '', '', div)
+    sortingList.push(sortingColumn)
+
+    if (i === num) createE('span', '', '', 'Current', sortingColumn)
+    else {
+      if (i === 0) {
+        createE('span', '', '', `Above ${v.site}`, sortingColumn)
+      } else if (i === site.length - 1) {
+        createE('span', '', '', `Below ${v.site}`, sortingColumn)
+      } else {
+        const smallerNum = v.site - 1 === num ? v.site : v.site - 1
+        const largerNum = v.site + 1 === num ? v.site : v.site + 1
+        createE('span', '', '', `${smallerNum} and ${largerNum}`, sortingColumn)
+      }
+      const button = createE('button', '', `sorting-${num}-${i}`, '->', sortingColumn)
+      sortingButtonList.push(button)
+      button.addEventListener('click', () => {
+        rewriteLine(num, i)
+      })
+    }
+  })
   const conversionBox = createE('div', 'box', '', '', div)
   const conversionContainer = createE('div', 'container', '', '', conversionBox)
   const conversionButton = createE('button', '', '', '+', conversionContainer)
@@ -227,8 +278,8 @@ const generateColumn = (v, num) => {
   })
   const boxList = [
     outputBox,
-    sendBox,
-    inputElement,
+    // sendBox,
+    // inputElement,
     conversionBox
   ]
   boxList.forEach(v => v.style.display = 'none')
@@ -257,13 +308,18 @@ const generateColumn = (v, num) => {
 }
 const displayColumn = async () => {
   return new Promise(resolve => {
+    console.log('displayColumn')
     const store = getObjectStore(storeName[0], 'readonly')
+    const l = site.length
     store.openCursor().onsuccess = async e => {
       const cursor = e.target.result
+      console.log(cursor)
       if (cursor) {
-        site.push(cursor.value)
+        if (!l) site.push(cursor.value)
         cursor.continue()
       } else {
+        document.getElementById`column`.textContent = null
+        console.log(document.getElementById`column`.textContent)
         site.forEach((v, i) => generateColumn(v, i))
         resolve()
       }
@@ -274,9 +330,10 @@ const putData = (site1, site2) => {
   const store = getObjectStore(storeName[0], 'readwrite')
   const request1 = store.put(site1)
   request1.onsuccess = () => {
+    console.log('put DB success')
     if (site2 === undefined) {
     } else {
-      const request2 = store.put(site2)
+      store.put(site2)
     }
   }
 }
@@ -296,6 +353,8 @@ const addEventListeners = async () => {
     // document.getElementById`clear`.addEventListener('click', () => clearObjectStore(storeName))
     document.getElementById`deleteDb`.addEventListener('click', () => deleteDb())
     document.getElementById`deleteDev`.addEventListener('click', () => deleteDb(false))
+    document.getElementById`showDb`.addEventListener('click', () => getDb())
+    document.getElementById`showSite`.addEventListener('click', () => console.log(site))
     resolve()
   })
 }
