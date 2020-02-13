@@ -53,41 +53,26 @@ const firstBuildingArray = [{
   name: 'Storage Tank',
   output: 0,
   amount: 8,
-  receiver: {
-    limit: 8,
-    content: '',
-    amount: 0
-  }, transmitter: {
-    limit: 32,
-    content: 'Crude',
-    amount: 8
-  }, timestamp: 0
+  capacity: 40,
+  content: 'Crude',
+  value: 8,
+  timestamp: 0
 }, {
   name: 'Generator Engine',
   output: 2,
   amount: 0,
-  receiver: {
-    limit: 4,
-    content: '',
-    amount: 0
-  }, transmitter: {
-    limit: 16,
-    content: '',
-    amount: 0
-  }, timestamp: 0
+  capacity: 20,
+  content: '',
+  value: 0,
+  timestamp: 0
 }, {
   name: 'Rig',
   output: 0,
   amount: 0,
-  receiver: {
-    limit: 2,
-    content: '',
-    amount: 0
-  }, transmitter: {
-    limit: 8,
-    content: '',
-    amount: 0
-  }, timestamp: 0
+  capacity: 10,
+  content: '',
+  value: 0,
+  timestamp: 0
 }]
 // const countLimit = 10 * 1e3
 // const coolTimeLimit = 250
@@ -181,9 +166,10 @@ const generateColumn = (v, num) => {
   const div = createE('div', 'unit', '', '', column)
   const top = createE('div', 'container', '', '', div)
   createE('span', '', `site-${num}`, `${num} ${v.name}`, top)
-  createE('span', '', `state-${num}`, '', top)
+  createE('span','',`time-${num}`, '', top)
   const checkbox = createE('input', '', `checkbox-${num}`, '', top)
   checkbox.type = 'checkbox'
+  checkbox.checked = site[num].timestamp ? true : false
   checkbox.addEventListener('input', e => {
     site[num].timestamp = e.target.checked ? Date.now() : 0
   })
@@ -191,24 +177,8 @@ const generateColumn = (v, num) => {
   createE('progress', '', `progressbar-${num}`, '', middle)
   const bottom = createE('div', 'container', '', '', div)
   const detailButton = createE('button', '', `button-${num}`, '+', bottom)
-  createE('span','',`time-${num}`, '', bottom)
-  const receiverUnit = createE('div', 'unit', '', '', div)
-  const receiverContainer = createE('div', 'container', '', '', receiverUnit)
-  createE('span', '', '', 'Receiver', receiverContainer)
-  createE('span', '', `receiverName-${num}`, v.receiver.content, receiverContainer)
-  createE(
-    'span', '', `receiverAmount-${num}`,
-    `${v.receiver.amount} / ${v.receiver.limit}`, receiverContainer)
-  const receiverBar = createE('progress', '', `receiverbar-${num}`, '', div)
-  const transmitterUnit = createE('div', 'unit', '', '', div)
-  const transmitterContainer = createE('div', 'container', '', '', transmitterUnit)
-  createE('span', '', '', 'Transmitter', transmitterContainer)
-  createE(
-    'span', '', `transmitterName-${num}`, v.transmitter.content, transmitterContainer)
-  createE(
-    'span', '', `transmitterAmount-${num}`,
-    `${v.transmitter.amount} / ${v.transmitter.limit}`, transmitterContainer)
-  const transmitterBar = createE('progress', '', `transmitterbar-${num}`, '', div)
+  createE('span', '', `content-${num}`, v.content, bottom)
+  createE('span', '', `amount-${num}`, `${v.amount} of ${v.capacity}`, bottom)
   const outputUnit = createE('div', 'unit', `detail-${num}`, '', div)
   const outputContainer = createE('div', 'container', '', '', outputUnit)
   const outputButton = createE('button', '', '', '+', outputContainer)
@@ -237,13 +207,13 @@ const generateColumn = (v, num) => {
   const sendUnit = createE('div', 'unit', '', '', div)
   const sendContainer = createE('div', 'container', '', '', sendUnit)
   createE('span', '', '', 'Send Amount', sendContainer)
-  const sendIndicator = createE('span', '', '', v.transmitter.amount, sendContainer)
+  const sendIndicator = createE('span', '', '', v.amount, sendContainer)
   const inputElement = createE('input', '', `input-${num}`, '', div)
   inputElement.type = 'range'
   inputElement.step = 1
   inputElement.min = 1
-  inputElement.max = v.transmitter.amount
-  inputElement.value = v.transmitter.amount
+  inputElement.max = v.amount
+  inputElement.value = v.amount
   inputElement.addEventListener('input', e => {
     v.amount = sendIndicator.textContent = e.target.value
   })
@@ -258,10 +228,6 @@ const generateColumn = (v, num) => {
     createE('span', '', '', `1 ${val.from} -> ${val.efficiency} ${val.to}`, conversion)
   })
   const unitList = [
-    receiverUnit,
-    receiverBar,
-    transmitterUnit,
-    transmitterBar,
     outputUnit,
     sendUnit,
     inputElement,
@@ -375,67 +341,42 @@ const addEventListeners = async () => {
     resolve()
   })
 }
-const rewriteAmount = (formerSite, afterSite) => {
-  // local list update
-  formerSite.transmitter.amount -= 1
-  afterSite.receiver.content = formerSite.transmitter.content
-  afterSite.receiver.amount += 1
-  // db update
-  putData(formerSite, afterSite)
-  // element update
-  document.getElementById(
-    `transmitterAmount-${formerSite.site}`).textContent =
-    `${formerSite.transmitter.amount} / ${formerSite.transmitter.limit}`
-  document.getElementById(
-    `receiverName-${afterSite.site}`).textContent = afterSite.receiver.content
-  document.getElementById(
-    `receiverAmount-${afterSite.site}`).textContent =
-    `${afterSite.receiver.amount} / ${afterSite.receiver.limit}`
-}
-const transmit = () => {
-  site.forEach((v, i) => {
-    if (v.timestamp !== 0) {
-      if (
-        v.transmitter.amount <= 0 ||
-        site[v.output].receiver.limit <= site[v.output].receiver.amount) {
-          v.timestamp = 0
-          document.getElementById(`checkbox-${i}`).checked = false
-      } else rewriteAmount(v, site[v.output])
-    }
-  })
-}
 const rewriteConvert = targetSite => {
   // local list update
+  const out = site[targetSite.output]
   buildingList[targetSite.name].conversion.forEach(v => {
     if (
-      v.from === targetSite.receiver.content &&
-      targetSite.transmitter.amount + v.efficiency * 1 <= targetSite.transmitter.limit
+      v.from === targetSite.content &&
+      0 < targetSite.amount &&
+      out.amount + v.efficiency * 1 <= out.capacity
     ) {
-      targetSite.receiver.amount -= 1
-      targetSite.transmitter.content = v.to
-      targetSite.transmitter.amount += v.efficiency * 1
-    } else return
+      targetSite.amount -= 1
+      out.content = v.to
+      out.amount += v.efficiency * 1
+    } else {
+      targetSite.timestamp = 0
+      document.getElementById(`checkbox-${targetSite.site}`).checked = false
+      return
+    }
   })
+  console.log('a')
   // db update
-  putData(targetSite)
+  putData(targetSite, out)
   // element update
+  document.getElementById(`amount-${targetSite.site}`).textContent =
+  `${targetSite.amount} of ${targetSite.capacity}`
+  document.getElementById(`content-${out.site}`).textContent = out.content
   document.getElementById(
-    `receiverAmount-${targetSite.site}`).textContent =
-    `${targetSite.receiver.amount} / ${targetSite.receiver.limit}`
-  document.getElementById(
-    `transmitterName-${targetSite.site}`).textContent = targetSite.transmitter.content
-  document.getElementById(
-    `transmitterAmount-${targetSite.site}`).textContent =
-    `${targetSite.transmitter.amount} / ${targetSite.transmitter.limit}`
+    `amount-${out.site}`).textContent = `${out.amount} of ${out.capacity}`
 }
 const convert = () => {
   site.forEach(v => {
-    if (0 < v.receiver.amount) rewriteConvert(v)
+    if (v.timestamp !== 0) rewriteConvert(v)
   })
 }
 const main = () => {
   // materialProcess()
-  transmit()
+  // transmit()
   convert()
   document.getElementById`conectedTime`.textContent = formatTime(Date.now() - openTime)
   window.requestAnimationFrame(main)
