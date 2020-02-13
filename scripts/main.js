@@ -96,22 +96,28 @@ const firstBuildingArray = [{
 let db
 let initializeFlag = false
 const openDb = () => { // console.log('open DB ...')
-  const request = indexedDB.open(dbName, dbVersion)
-  request.onsuccess = () => {
-    db = request.result
-    if (initializeFlag) {
-      initializeFlag = false
-      initializeDb()
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(dbName, dbVersion)
+    request.onsuccess = async () => {
+      db = request.result
+      if (initializeFlag) {
+        initializeFlag = false
+        initializeDb()
+      }
+      await displayColumn()
+      console.log('open DB success')
+      resolve()
     }
-    displayColumn()
-    console.log('open DB success')
-  }
-  request.onupgradeneeded = e => {
-    console.log('openDb.onupgradeneeded')
-    initializeFlag = true
-    e.target.result.createObjectStore(storeName[0], {keyPath: idName})
-  }
-  request.onerror = e => console.log('openDb:', e.target.errorCode)
+    request.onupgradeneeded = e => {
+      console.log('openDb.onupgradeneeded')
+      initializeFlag = true
+      e.target.result.createObjectStore(storeName[0], {keyPath: idName})
+    }
+    request.onerror = e => {
+      console.log('openDb error:', e.target.errorCode)
+      reject()
+    }
+  })
 }
 const deleteDb = (bool = true) => { // console.log('delete DB ...')
   const deleteRequest = indexedDB.deleteDatabase(dbName)
@@ -285,17 +291,20 @@ const generateColumn = (v, num) => {
     })
   })
 }
-const displayColumn = () => {
-  const store = getObjectStore(storeName[0], 'readonly')
-  store.openCursor().onsuccess = e => {
-    const cursor = e.target.result
-    if (cursor) { // console.log(cursor.key, cursor.value.name)
-      site.push(cursor.value)
-      cursor.continue()
-    } else {
-      site.forEach((v, i) => generateColumn(v, i))
+const displayColumn = async () => {
+  return new Promise(resolve => {
+    const store = getObjectStore(storeName[0], 'readonly')
+    store.openCursor().onsuccess = async e => {
+      const cursor = e.target.result
+      if (cursor) { // console.log(cursor.key, cursor.value.name)
+        site.push(cursor.value)
+        cursor.continue()
+      } else {
+        site.forEach((v, i) => generateColumn(v, i))
+        resolve()
+      }
     }
-  }
+  })
 }
 const putData = (site1, site2) => { // console.log('put ...')
   const store = getObjectStore(storeName[0], 'readwrite')
@@ -358,11 +367,13 @@ const formatTime = argTime => {
   if (0 < mm) time = mm + ':' + time
   return time
 }
-const addEventListeners = msg => {
-  // console.log('addEventListeners')
-  // document.getElementById`clear`.addEventListener('click', () => clearObjectStore(storeName))
-  document.getElementById`deleteDb`.addEventListener('click', () => deleteDb())
-  document.getElementById`deleteDev`.addEventListener('click', () => deleteDb(false))
+const addEventListeners = async () => {
+  return new Promise(resolve => {
+    // document.getElementById`clear`.addEventListener('click', () => clearObjectStore(storeName))
+    document.getElementById`deleteDb`.addEventListener('click', () => deleteDb())
+    document.getElementById`deleteDev`.addEventListener('click', () => deleteDb(false))
+    resolve()
+  })
 }
 const rewriteAmount = (formerSite, afterSite) => {
   // local list update
@@ -417,19 +428,21 @@ const rewriteConvert = targetSite => {
 const convert = () => {
   site.forEach(v => {
     if (0 < v.receiver.amount && v.transmitter.amount <= v.transmitter.limit) {
-      console.log('a')
       rewriteConvert(v)
     }
   })
 }
 const main = () => {
   // materialProcess()
-  convert()
   transmit()
+  convert()
   document.getElementById`conectedTime`.textContent = formatTime(Date.now() - openTime)
   window.requestAnimationFrame(main)
 }
-openDb()
-addEventListeners()
-main()
+const asyncFunc = async () => {
+  await openDb()
+  addEventListeners()
+  main()
+}
+asyncFunc()
 }
