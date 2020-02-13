@@ -174,7 +174,9 @@ const generateColumn = (v, num) => {
     site[num].timestamp = e.target.checked ? Date.now() : 0
   })
   const middle = createE('div', 'container', '', '', div)
-  createE('progress', '', `progressbar-${num}`, '', middle)
+  const progress = createE('progress', '', `progress-${num}`, '', middle)
+  progress.max = v.capacity
+  progress.value = v.amount
   const bottom = createE('div', 'container', '', '', div)
   const detailButton = createE('button', '', `button-${num}`, '+', bottom)
   createE('span', '', `content-${num}`, v.content, bottom)
@@ -359,7 +361,6 @@ const rewriteConvert = targetSite => {
       return
     }
   })
-  console.log('a')
   // db update
   putData(targetSite, out)
   // element update
@@ -374,10 +375,18 @@ const convert = () => {
     if (v.timestamp !== 0) rewriteConvert(v)
   })
 }
+const displayUpdate = () => {
+  site.forEach(v => {
+    const progress = document.getElementById(`progress-${v.site}`)
+    progress.max = v.capacity
+    progress.value = v.amount
+  })
+}
 const main = () => {
   // materialProcess()
   // transmit()
   convert()
+  displayUpdate()
   document.getElementById`conectedTime`.textContent = formatTime(Date.now() - openTime)
   window.requestAnimationFrame(main)
 }
