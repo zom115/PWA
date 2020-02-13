@@ -177,8 +177,8 @@ const generateColumn = (v, num) => {
   const detailButton = createE('button', '', `button-${num}`, '+', bottom)
   createE('span', '', `content-${num}`, v.content, bottom)
   createE('span', '', `amount-${num}`, `${v.amount} of ${v.capacity}`, bottom)
-  const outputUnit = createE('div', 'box', `detail-${num}`, '', div)
-  const outputContainer = createE('div', 'container', '', '', outputUnit)
+  const outputBox = createE('div', 'box', `detail-${num}`, '', div)
+  const outputContainer = createE('div', 'container', '', '', outputBox)
   const outputButton = createE('button', '', '', '+', outputContainer)
   createE('span', '', '', 'Output', outputContainer)
   createE(
@@ -202,8 +202,8 @@ const generateColumn = (v, num) => {
       }
     })
   })
-  const sendUnit = createE('div', 'box', '', '', div)
-  const sendContainer = createE('div', 'container', '', '', sendUnit)
+  const sendBox = createE('div', 'box', '', '', div)
+  const sendContainer = createE('div', 'container', '', '', sendBox)
   createE('span', '', '', 'Send Amount', sendContainer)
   const sendIndicator = createE('span', '', '', v.amount, sendContainer)
   const inputElement = createE('input', '', `input-${num}`, '', div)
@@ -215,8 +215,8 @@ const generateColumn = (v, num) => {
   inputElement.addEventListener('input', e => {
     v.value = sendIndicator.textContent = e.target.value
   })
-  const conversionUnit = createE('div', 'box', '', '', div)
-  const conversionContainer = createE('div', 'container', '', '', conversionUnit)
+  const conversionBox = createE('div', 'box', '', '', div)
+  const conversionContainer = createE('div', 'container', '', '', conversionBox)
   const conversionButton = createE('button', '', '', '+', conversionContainer)
   createE('span', '', '', 'Conversion Information', conversionContainer)
   let conversionList = []
@@ -226,10 +226,10 @@ const generateColumn = (v, num) => {
     createE('span', '', '', `1 ${val.from} -> ${val.efficiency} ${val.to}`, conversion)
   })
   const boxList = [
-    outputUnit,
-    sendUnit,
+    outputBox,
+    sendBox,
     inputElement,
-    conversionUnit
+    conversionBox
   ]
   boxList.forEach(v => v.style.display = 'none')
   outputList.forEach(v => v.style.display = 'none')
