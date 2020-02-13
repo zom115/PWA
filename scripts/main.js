@@ -406,12 +406,15 @@ const transmit = () => {
 }
 const rewriteConvert = targetSite => {
   // local list update
-  targetSite.receiver.amount -= 1
   buildingList[targetSite.name].conversion.forEach(v => {
-    if (v.from === targetSite.receiver.content) {
+    if (
+      v.from === targetSite.receiver.content &&
+      targetSite.transmitter.amount + v.efficiency * 1 <= targetSite.transmitter.limit
+    ) {
+      targetSite.receiver.amount -= 1
       targetSite.transmitter.content = v.to
       targetSite.transmitter.amount += v.efficiency * 1
-    }
+    } else return
   })
   // db update
   putData(targetSite)
@@ -427,9 +430,7 @@ const rewriteConvert = targetSite => {
 }
 const convert = () => {
   site.forEach(v => {
-    if (0 < v.receiver.amount && v.transmitter.amount <= v.transmitter.limit) {
-      rewriteConvert(v)
-    }
+    if (0 < v.receiver.amount) rewriteConvert(v)
   })
 }
 const main = () => {
