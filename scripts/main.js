@@ -184,8 +184,8 @@ const generateColumn = (v, num) => {
   const middle = createE('div', 'container', '', '', div)
   createE('progress', '', `progressbar-${num}`, '', middle)
   const bottom = createE('div', 'container', '', '', div)
-  createE('span','',`time-${num}`, '', bottom)
   const detailButton = createE('button', '', `button-${num}`, '+', bottom)
+  createE('span','',`time-${num}`, '', bottom)
   const receiverUnit = createE('div', 'unit', '', '', div)
   const receiverContainer = createE('div', 'container', '', '', receiverUnit)
   createE('span', '', '', 'Receiver', receiverContainer)
@@ -205,10 +205,10 @@ const generateColumn = (v, num) => {
   const transmitterBar = createE('progress', '', `transmitterbar-${num}`, '', div)
   const outputUnit = createE('div', 'unit', `detail-${num}`, '', div)
   const outputContainer = createE('div', 'container', '', '', outputUnit)
+  const outputButton = createE('button', '', '', '+', outputContainer)
   createE('span', '', '', 'Output', outputContainer)
   createE(
     'span', '', `output-${num}`, `${v.output} ${site[v.output].name}`, outputContainer)
-  const outputButton = createE('button', '', '', '+', outputContainer)
   let outputList = []
   let outputButtonList = []
   buildingList[v.name].acceptable.forEach(val => {
@@ -243,8 +243,8 @@ const generateColumn = (v, num) => {
   })
   const conversionUnit = createE('div', 'unit', '', '', div)
   const conversionContainer = createE('div', 'container', '', '', conversionUnit)
-  createE('span', '', '', 'Conversion Information', conversionContainer)
   const conversionButton = createE('button', '', '', '+', conversionContainer)
+  createE('span', '', '', 'Conversion Information', conversionContainer)
   let conversionList = []
   buildingList[v.name].conversion.forEach(val => {
     const conversion = createE('div', 'container', '', '', div)
