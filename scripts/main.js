@@ -308,18 +308,15 @@ const generateColumn = (v, num) => {
 }
 const displayColumn = async () => {
   return new Promise(resolve => {
-    console.log('displayColumn')
     const store = getObjectStore(storeName[0], 'readonly')
     const l = site.length
     store.openCursor().onsuccess = async e => {
       const cursor = e.target.result
-      console.log(cursor)
       if (cursor) {
         if (!l) site.push(cursor.value)
         cursor.continue()
       } else {
         document.getElementById`column`.textContent = null
-        console.log(document.getElementById`column`.textContent)
         site.forEach((v, i) => generateColumn(v, i))
         resolve()
       }
@@ -330,7 +327,6 @@ const putData = (site1, site2) => {
   const store = getObjectStore(storeName[0], 'readwrite')
   const request1 = store.put(site1)
   request1.onsuccess = () => {
-    console.log('put DB success')
     if (site2 === undefined) {
     } else {
       store.put(site2)
