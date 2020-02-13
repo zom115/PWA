@@ -376,7 +376,7 @@ const rewriteAmount = (formerSite, afterSite) => {
     `transmitterAmount-${formerSite.site}`).textContent =
     `${formerSite.transmitter.amount} / ${formerSite.transmitter.limit}`
   document.getElementById(
-    `receiverName-${afterSite.site}`).textContent =afterSite.receiver.content
+    `receiverName-${afterSite.site}`).textContent = afterSite.receiver.content
   document.getElementById(
     `receiverAmount-${afterSite.site}`).textContent =
     `${afterSite.receiver.amount} / ${afterSite.receiver.limit}`
@@ -393,8 +393,38 @@ const transmit = () => {
     }
   })
 }
+const rewriteConvert = targetSite => {
+  // local list update
+  targetSite.receiver.amount -= 1
+  buildingList[targetSite.name].conversion.forEach(v => {
+    if (v.from === targetSite.receiver.content) {
+      targetSite.transmitter.content = v.to
+      targetSite.transmitter.amount += v.efficiency * 1
+    }
+  })
+  // db update
+  putData(targetSite)
+  // element update
+  document.getElementById(
+    `receiverAmount-${targetSite.site}`).textContent =
+    `${targetSite.receiver.amount} / ${targetSite.receiver.limit}`
+  document.getElementById(
+    `transmitterName-${targetSite.site}`).textContent = targetSite.transmitter.content
+  document.getElementById(
+    `transmitterAmount-${targetSite.site}`).textContent =
+    `${targetSite.transmitter.amount} / ${targetSite.transmitter.limit}`
+}
+const convert = () => {
+  site.forEach(v => {
+    if (0 < v.receiver.amount && v.transmitter.amount <= v.transmitter.limit) {
+      console.log('a')
+      rewriteConvert(v)
+    }
+  })
+}
 const main = () => {
   // materialProcess()
+  convert()
   transmit()
   document.getElementById`conectedTime`.textContent = formatTime(Date.now() - openTime)
   window.requestAnimationFrame(main)
