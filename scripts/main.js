@@ -159,7 +159,7 @@ const generateColumn = (v, num) => {
     return element
   }
   const column = document.getElementById`column`
-  const div = createE('div', 'unit', '', '', column)
+  const div = createE('div', 'box', '', '', column)
   const top = createE('div', 'container', '', '', div)
   createE('span', '', `site-${num}`, `${num} ${v.name}`, top)
   createE('span','',`time-${num}`, '', top)
@@ -177,7 +177,7 @@ const generateColumn = (v, num) => {
   const detailButton = createE('button', '', `button-${num}`, '+', bottom)
   createE('span', '', `content-${num}`, v.content, bottom)
   createE('span', '', `amount-${num}`, `${v.amount} of ${v.capacity}`, bottom)
-  const outputUnit = createE('div', 'unit', `detail-${num}`, '', div)
+  const outputUnit = createE('div', 'box', `detail-${num}`, '', div)
   const outputContainer = createE('div', 'container', '', '', outputUnit)
   const outputButton = createE('button', '', '', '+', outputContainer)
   createE('span', '', '', 'Output', outputContainer)
@@ -202,7 +202,7 @@ const generateColumn = (v, num) => {
       }
     })
   })
-  const sendUnit = createE('div', 'unit', '', '', div)
+  const sendUnit = createE('div', 'box', '', '', div)
   const sendContainer = createE('div', 'container', '', '', sendUnit)
   createE('span', '', '', 'Send Amount', sendContainer)
   const sendIndicator = createE('span', '', '', v.amount, sendContainer)
@@ -215,7 +215,7 @@ const generateColumn = (v, num) => {
   inputElement.addEventListener('input', e => {
     v.amount = sendIndicator.textContent = e.target.value
   })
-  const conversionUnit = createE('div', 'unit', '', '', div)
+  const conversionUnit = createE('div', 'box', '', '', div)
   const conversionContainer = createE('div', 'container', '', '', conversionUnit)
   const conversionButton = createE('button', '', '', '+', conversionContainer)
   createE('span', '', '', 'Conversion Information', conversionContainer)
@@ -225,13 +225,13 @@ const generateColumn = (v, num) => {
     conversionList.push(conversion)
     createE('span', '', '', `1 ${val.from} -> ${val.efficiency} ${val.to}`, conversion)
   })
-  const unitList = [
+  const boxList = [
     outputUnit,
     sendUnit,
     inputElement,
     conversionUnit
   ]
-  unitList.forEach(v => v.style.display = 'none')
+  boxList.forEach(v => v.style.display = 'none')
   outputList.forEach(v => v.style.display = 'none')
   conversionList.forEach(v => v.style.display = 'none')
   const buttonList = [outputButton, conversionButton]
@@ -239,7 +239,7 @@ const generateColumn = (v, num) => {
 
   detailButton.addEventListener('click', () => {
     detailButton.textContent = detailButton.textContent === '+' ? '-' : '+'
-    unitList.forEach(v => v.style.display = v.style.display === 'none' ? 'flex' : 'none')
+    boxList.forEach(v => v.style.display = v.style.display === 'none' ? 'flex' : 'none')
     buttonList.forEach((v, i) => {
       if (v.textContent === '-') {
         constList[i].forEach(
