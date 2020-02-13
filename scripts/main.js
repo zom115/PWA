@@ -52,6 +52,7 @@ Object.keys(buildingList).forEach(v => {
 const firstBuildingArray = [{
   name: 'Storage Tank',
   output: 0,
+  amount: 8,
   receiver: {
     limit: 8,
     content: '',
@@ -60,10 +61,11 @@ const firstBuildingArray = [{
     limit: 32,
     content: 'Crude',
     amount: 8
-  }
+  }, timestamp: 0
 }, {
   name: 'Generator Engine',
   output: 2,
+  amount: 0,
   receiver: {
     limit: 4,
     content: '',
@@ -72,10 +74,11 @@ const firstBuildingArray = [{
     limit: 16,
     content: '',
     amount: 0
-  }
+  }, timestamp: 0
 }, {
   name: 'Rig',
   output: 0,
+  amount: 0,
   receiver: {
     limit: 2,
     content: '',
@@ -84,7 +87,7 @@ const firstBuildingArray = [{
     limit: 8,
     content: '',
     amount: 0
-  }
+  }, timestamp: 0
 }]
 // const countLimit = 10 * 1e3
 // const coolTimeLimit = 250
@@ -92,8 +95,7 @@ const firstBuildingArray = [{
 // let takeFlag = false
 let db
 let initializeFlag = false
-const openDb = () => {
-  console.log('open DB ...')
+const openDb = () => { // console.log('open DB ...')
   const request = indexedDB.open(dbName, dbVersion)
   request.onsuccess = () => {
     db = request.result
@@ -111,8 +113,7 @@ const openDb = () => {
   }
   request.onerror = e => console.log('openDb:', e.target.errorCode)
 }
-const deleteDb = (bool = true) => {
-  console.log('delete DB ...')
+const deleteDb = (bool = true) => { // console.log('delete DB ...')
   const deleteRequest = indexedDB.deleteDatabase(dbName)
   deleteRequest.onsuccess = () => {
     console.log('delete DB success')
@@ -125,14 +126,15 @@ const deleteDb = (bool = true) => {
   }
   deleteRequest.onerror = () => console.log('delete DB error')
 }
-const initializeDb = () => {
-  console.log('initialize ...')
+const initializeDb = () => { // console.log('initialize ...')
   document.getElementById`column`.textContent = null
   const store = getObjectStore(storeName[0], 'readwrite')
   firstBuildingArray.forEach((v, i) => {
     v[idName] = i
     const req = store.put(firstBuildingArray[i])
-    req.onsuccess = () => {'initialize DB success'}
+    req.onsuccess = () => {
+      console.log(`${i + 1} / ${firstBuildingArray.length} initialize DB success`)
+    }
     req.onerror = () => console.error('initialize DB error', req.error)
   })
 }
@@ -156,7 +158,7 @@ const rewriteOutput = (former, i) => {
   // local list update
   site[former].output = i
   // db update
-  putData(former)
+  putData(site[former])
   // element update
   document.getElementById(`output-${former}`).textContent = `${i} ${site[i].name}`
 }
@@ -174,6 +176,11 @@ const generateColumn = (v, num) => {
   const top = createE('div', 'container', '', '', div)
   createE('span', '', `site-${num}`, `${num} ${v.name}`, top)
   createE('span', '', `state-${num}`, '', top)
+  const checkbox = createE('input', '', `checkbox-${num}`, '', top)
+  checkbox.type = 'checkbox'
+  checkbox.addEventListener('input', e => {
+    site[num].timestamp = e.target.checked ? Date.now() : 0
+  })
   const middle = createE('div', 'container', '', '', div)
   createE('progress', '', `progressbar-${num}`, '', middle)
   const bottom = createE('div', 'container', '', '', div)
@@ -182,14 +189,19 @@ const generateColumn = (v, num) => {
   const receiverUnit = createE('div', 'unit', '', '', div)
   const receiverContainer = createE('div', 'container', '', '', receiverUnit)
   createE('span', '', '', 'Receiver', receiverContainer)
-  createE('span', '', '', v.receiver.content, receiverContainer)
-  createE('span', '', '', `${v.receiver.amount} / ${v.receiver.limit}`, receiverContainer)
+  createE('span', '', `receiverName-${num}`, v.receiver.content, receiverContainer)
+  createE(
+    'span', '', `receiverAmount-${num}`,
+    `${v.receiver.amount} / ${v.receiver.limit}`, receiverContainer)
   const receiverBar = createE('progress', '', `receiverbar-${num}`, '', div)
   const transmitterUnit = createE('div', 'unit', '', '', div)
   const transmitterContainer = createE('div', 'container', '', '', transmitterUnit)
   createE('span', '', '', 'Transmitter', transmitterContainer)
-  createE('span', '', '', v.transmitter.content, transmitterContainer)
-  createE('span', '', '', `${v.transmitter.amount} / ${v.transmitter.limit}`, transmitterContainer)
+  createE(
+    'span', '', `transmitterName-${num}`, v.transmitter.content, transmitterContainer)
+  createE(
+    'span', '', `transmitterAmount-${num}`,
+    `${v.transmitter.amount} / ${v.transmitter.limit}`, transmitterContainer)
   const transmitterBar = createE('progress', '', `transmitterbar-${num}`, '', div)
   const outputUnit = createE('div', 'unit', `detail-${num}`, '', div)
   const outputContainer = createE('div', 'container', '', '', outputUnit)
@@ -226,7 +238,9 @@ const generateColumn = (v, num) => {
   inputElement.min = 1
   inputElement.max = v.transmitter.amount
   inputElement.value = v.transmitter.amount
-  inputElement.addEventListener('input', e => sendIndicator.textContent = e.target.value)
+  inputElement.addEventListener('input', e => {
+    v.amount = sendIndicator.textContent = e.target.value
+  })
   const conversionUnit = createE('div', 'unit', '', '', div)
   const conversionContainer = createE('div', 'container', '', '', conversionUnit)
   createE('span', '', '', 'Conversion Information', conversionContainer)
@@ -275,8 +289,7 @@ const displayColumn = () => {
   const store = getObjectStore(storeName[0], 'readonly')
   store.openCursor().onsuccess = e => {
     const cursor = e.target.result
-    if (cursor) {
-      // console.log(cursor.key, cursor.value.name)
+    if (cursor) { // console.log(cursor.key, cursor.value.name)
       site.push(cursor.value)
       cursor.continue()
     } else {
@@ -284,11 +297,16 @@ const displayColumn = () => {
     }
   }
 }
-const putData = id => {
-  console.log('put ...')
+const putData = (site1, site2) => { // console.log('put ...')
   const store = getObjectStore(storeName[0], 'readwrite')
-  const req = store.put(site[id])
-  req.onsuccess = () => {console.log('put success')}
+  const request1 = store.put(site1)
+  request1.onsuccess = () => {
+    if (site2 === undefined) { // console.log('put success')
+    } else {
+      const request2 = store.put(site2)
+      // request2.onsuccess = () => console.log('2 sites put success')
+    }
+  }
 }
 // const addPublication = arg => {
 //   console.log('add ...')
@@ -341,13 +359,43 @@ const formatTime = argTime => {
   return time
 }
 const addEventListeners = msg => {
-  console.log('addEventListeners')
+  // console.log('addEventListeners')
   // document.getElementById`clear`.addEventListener('click', () => clearObjectStore(storeName))
   document.getElementById`deleteDb`.addEventListener('click', () => deleteDb())
   document.getElementById`deleteDev`.addEventListener('click', () => deleteDb(false))
 }
+const rewriteAmount = (formerSite, afterSite) => {
+  // local list update
+  formerSite.transmitter.amount -= 1
+  afterSite.receiver.content = formerSite.transmitter.content
+  afterSite.receiver.amount += 1
+  // db update
+  putData(formerSite, afterSite)
+  // element update
+  document.getElementById(
+    `transmitterAmount-${formerSite.site}`).textContent =
+    `${formerSite.transmitter.amount} / ${formerSite.transmitter.limit}`
+  document.getElementById(
+    `receiverName-${afterSite.site}`).textContent =afterSite.receiver.content
+  document.getElementById(
+    `receiverAmount-${afterSite.site}`).textContent =
+    `${afterSite.receiver.amount} / ${afterSite.receiver.limit}`
+}
+const transmit = () => {
+  site.forEach((v, i) => {
+    if (v.timestamp !== 0) {
+      if (
+        v.transmitter.amount <= 0 ||
+        site[v.output].receiver.limit <= site[v.output].receiver.amount) {
+          v.timestamp = 0
+          document.getElementById(`checkbox-${i}`).checked = false
+      } else rewriteAmount(v, site[v.output])
+    }
+  })
+}
 const main = () => {
   // materialProcess()
+  transmit()
   document.getElementById`conectedTime`.textContent = formatTime(Date.now() - openTime)
   window.requestAnimationFrame(main)
 }
