@@ -16,7 +16,6 @@ const storeName = ['site', 'market', 'statistics', 'setting']
 const idName = 'site'
 let localBuffer = {[storeName[0]]: []}
 const site = localBuffer[storeName[0]]
-// const materialName = 'Crude'
 const buildingList = {
   'Storage Tank': {
     acceptor: ['Storage Tank', 'Rig'],
@@ -74,13 +73,9 @@ const firstBuildingArray = [{
   value: 0,
   timestamp: 0
 }]
-// const countLimit = 10 * 1e3
-// const coolTimeLimit = 250
-// let getTime = 0
-// let takeFlag = false
 let db
 let initializeFlag = false
-const openDb = () => { // console.log('open DB ...')
+const openDb = () => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(dbName, dbVersion)
     request.onsuccess = async () => {
@@ -104,7 +99,7 @@ const openDb = () => { // console.log('open DB ...')
     }
   })
 }
-const deleteDb = (bool = true) => { // console.log('delete DB ...')
+const deleteDb = (bool = true) => {
   const deleteRequest = indexedDB.deleteDatabase(dbName)
   deleteRequest.onsuccess = () => {
     console.log('delete DB success')
@@ -117,7 +112,7 @@ const deleteDb = (bool = true) => { // console.log('delete DB ...')
   }
   deleteRequest.onerror = () => console.log('delete DB error')
 }
-const initializeDb = () => { // console.log('initialize ...')
+const initializeDb = () => {
   document.getElementById`column`.textContent = null
   const store = getObjectStore(storeName[0], 'readwrite')
   firstBuildingArray.forEach((v, i) => {
@@ -264,7 +259,7 @@ const displayColumn = async () => {
     const store = getObjectStore(storeName[0], 'readonly')
     store.openCursor().onsuccess = async e => {
       const cursor = e.target.result
-      if (cursor) { // console.log(cursor.key, cursor.value.name)
+      if (cursor) {
         site.push(cursor.value)
         cursor.continue()
       } else {
@@ -274,56 +269,16 @@ const displayColumn = async () => {
     }
   })
 }
-const putData = (site1, site2) => { // console.log('put ...')
+const putData = (site1, site2) => {
   const store = getObjectStore(storeName[0], 'readwrite')
   const request1 = store.put(site1)
   request1.onsuccess = () => {
-    if (site2 === undefined) { // console.log('put success')
+    if (site2 === undefined) {
     } else {
       const request2 = store.put(site2)
-      // request2.onsuccess = () => console.log('2 sites put success')
     }
   }
 }
-// const addPublication = arg => {
-//   console.log('add ...')
-//   const store = getObjectStore(storeName[0], 'readwrite')
-//   const getFromId = store.get(arg)
-//   getFromId.onsuccess = () => {
-//     const a = getFromId.result
-//     const num = (a !== undefined) ? a.value + 1 : 1
-//     const data = {[idName]: arg, value: num}
-//     let req = store.put(data)
-//     req.onsuccess = () => {
-//       console.log('Insertion in DB successful')
-//       displayColumn()
-//     }
-//     req.onerror = () => {
-//       console.error('addPublication error', req.error)
-//     }
-//   }
-// }
-// const materialProcess = () => {
-//   if (getTime !== 0) {
-//     let elapsedTime = Date.now() - getTime
-//     let rate = elapsedTime / countLimit
-//     if (countLimit <= elapsedTime) {
-//       if (!takeFlag) {
-//         // addPublication(materialName)
-//         takeFlag = true
-//       }
-//       rate = (coolTimeLimit - (elapsedTime - countLimit)) / coolTimeLimit
-//       if (countLimit + coolTimeLimit <= elapsedTime) {
-//         document.getElementById`testButton`.disabled = false
-//         getTime = 0
-//         takeFlag = false
-//       }
-//     }
-//     document.getElementById`progress`.value = rate
-//     document.getElementById`testTime`.textContent = countLimit <= elapsedTime ? ''
-//     : formatTime(countLimit - elapsedTime)
-//   }
-// }
 let openTime = Date.now()
 document.getElementById`timeReset`.addEventListener('click', () => openTime = Date.now())
 const formatTime = argTime => {
@@ -383,8 +338,6 @@ const displayUpdate = () => {
   })
 }
 const main = () => {
-  // materialProcess()
-  // transmit()
   convert()
   displayUpdate()
   document.getElementById`conectedTime`.textContent = formatTime(Date.now() - openTime)
