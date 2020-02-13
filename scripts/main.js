@@ -213,7 +213,7 @@ const generateColumn = (v, num) => {
   inputElement.max = v.amount
   inputElement.value = v.amount
   inputElement.addEventListener('input', e => {
-    v.amount = sendIndicator.textContent = e.target.value
+    v.value = sendIndicator.textContent = e.target.value
   })
   const conversionUnit = createE('div', 'box', '', '', div)
   const conversionContainer = createE('div', 'container', '', '', conversionUnit)
