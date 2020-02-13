@@ -280,13 +280,13 @@ const generateColumn = (v, num) => {
     outputBox,
     // sendBox,
     // inputElement,
+    sortingBox,
     conversionBox
   ]
   boxList.forEach(v => v.style.display = 'none')
-  outputList.forEach(v => v.style.display = 'none')
-  conversionList.forEach(v => v.style.display = 'none')
-  const buttonList = [outputButton, conversionButton]
-  const constList = [outputList, conversionList]
+  const buttonList = [outputButton, sortingExpandButton, conversionButton]
+  const constList = [outputList, sortingList, conversionList]
+  constList.forEach(v => v.forEach(val => val.style.display = 'none'))
 
   detailButton.addEventListener('click', () => {
     detailButton.textContent = detailButton.textContent === '+' ? '-' : '+'
