@@ -87,6 +87,7 @@ const openDb = () => {
         initializeFlag = false
         initializeDb()
       }
+      await setDbForBuffer()
       await displayColumn()
       console.log('open DB success')
       resolve()
@@ -94,7 +95,9 @@ const openDb = () => {
     request.onupgradeneeded = e => {
       console.log('openDb.onupgradeneeded')
       initializeFlag = true
-      e.target.result.createObjectStore(storeName[0], {keyPath: idName})
+      storeName.forEach(v => {
+        e.target.result.createObjectStore(v, {keyPath: idName})
+      })
     }
     request.onerror = e => {
       console.log('openDb error:', e.target.errorCode)
@@ -116,32 +119,44 @@ const deleteDb = (bool = true) => {
   deleteRequest.onerror = () => console.log('delete DB error')
 }
 const initializeDb = () => {
-  document.getElementById`column`.textContent = null
-  const store = getObjectStore(storeName[0], 'readwrite')
   firstBuildingArray.forEach((v, i) => {
     v[idName] = i
-    const req = store.put(firstBuildingArray[i])
-    req.onsuccess = () => {
-      console.log(`${i + 1} / ${firstBuildingArray.length} initialize DB success`)
+    putData(firstBuildingArray[i])
+  })
+}
+const setDbForBuffer = () => {
+  return new Promise(resolve => {
+    const store = getObjectStore(storeName[0], 'readonly')
+    store.openCursor().onsuccess = e => {
+      const cursor = e.target.result
+      if (cursor) {
+        site.push(cursor.value)
+        cursor.continue()
+      } else {
+        console.log('set DB contents for buffer successful')
+        resolve()
+      }
     }
-    req.onerror = () => console.error('initialize DB error', req.error)
   })
 }
 const getObjectStore = (store_name, mode) => {
   const tx = db.transaction(store_name, mode)
   return tx.objectStore(store_name)
 }
-const getDb = () => {
-  const store = getObjectStore(storeName[0], 'readonly')
-  store.openCursor().onsuccess = async e => {
-    const cursor = e.target.result
-    if (cursor) {
-      console.log(cursor.value)
-      cursor.continue()
-    } else {
-      console.log('end')
+const getDb = num => {
+  return new Promise(resolve => {
+    const store = getObjectStore(storeName[num], 'readonly')
+    store.openCursor().onsuccess = e => {
+      const cursor = e.target.result
+      if (cursor) {
+        console.log(cursor.key, cursor.value)
+        cursor.continue()
+      } else {
+        console.log('end')
+        resolve()
+      }
     }
-  }
+  })
 }
 // const clearObjectStore = (store_name) => {
 //   console.log('clear ...')
@@ -308,21 +323,11 @@ const generateColumn = (v, num) => {
     })
   })
 }
-const displayColumn = async () => {
+const displayColumn = () => {
   return new Promise(resolve => {
-    const store = getObjectStore(storeName[0], 'readonly')
-    const l = site.length
-    store.openCursor().onsuccess = async e => {
-      const cursor = e.target.result
-      if (cursor) {
-        if (!l) site.push(cursor.value)
-        cursor.continue()
-      } else {
-        document.getElementById`column`.textContent = null
-        site.forEach((v, i) => generateColumn(v, i))
-        resolve()
-      }
-    }
+    document.getElementById`column`.textContent = null
+    site.forEach((v, i) => generateColumn(v, i))
+    resolve()
   })
 }
 const putData = (site1, site2) => {
@@ -351,7 +356,8 @@ const addEventListeners = async () => {
     // document.getElementById`clear`.addEventListener('click', () => clearObjectStore(storeName))
     document.getElementById`deleteDb`.addEventListener('click', () => deleteDb())
     document.getElementById`deleteDev`.addEventListener('click', () => deleteDb(false))
-    document.getElementById`showDb`.addEventListener('click', () => getDb())
+    document.getElementById`showSiteDb`.addEventListener('click', () => getDb(0))
+    document.getElementById`showMarketDb`.addEventListener('click', () => getDb(1))
     document.getElementById`showSite`.addEventListener('click', () => console.log(site))
     resolve()
   })
