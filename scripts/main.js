@@ -171,14 +171,17 @@ const putEveryStore = (storeName, obj) => {
   })
 }
 const putStore = (site1, site2) => {
-  const store = getObjectStore(STORE_NAME_LIST[0], 'readwrite')
-  const request1 = store.put(site1)
-  request1.onsuccess = () => {
-    if (site2 === undefined) {
-    } else {
-      store.put(site2)
+  return new Promise(resolve => {
+    const store = getObjectStore(STORE_NAME_LIST[0], 'readwrite')
+    const request1 = store.put(site1)
+    request1.onsuccess = () => {
+      if (site2 === undefined) resolve()
+      else {
+        const request2 = store.put(site2)
+        request2.onsuccess = () => resolve()
+      }
     }
-  }
+  })
 }
 const getDb = num => {
   return new Promise(resolve => {
@@ -315,7 +318,7 @@ const generateElementToBody = () => {
     resolve()
   })
 }
-const generateSite = (v, num) => {
+const generateSite = (building) => {
   const createE = (e, c, i = '', t = '', a) => {
     const element = document.createElement(e)
     if (c !== '') element.className = c
@@ -327,44 +330,45 @@ const generateSite = (v, num) => {
   const siteItem = document.getElementById`site`
   const div = createE('div', 'box', '', '', siteItem)
   const top = createE('div', 'container', '', '', div)
-  createE('span', '', `site-${num}`, `${num} ${v.name}`, top)
-  createE('span','',`time-${num}`, '', top)
-  const checkbox = createE('input', '', `checkbox-${num}`, '', top)
+  createE('span', '', `site-${building.site}`, `${building.site} ${building.name}`, top)
+  createE('span','',`time-${building.site}`, '', top)
+  const checkbox = createE('input', '', `checkbox-${building.site}`, '', top)
   checkbox.type = 'checkbox'
-  checkbox.checked = siteList[num].timestamp ? true : false
+  checkbox.checked = siteList[building.site].timestamp ? true : false
   checkbox.addEventListener('input', e => {
-    siteList[num].timestamp = e.target.checked ? Date.now() : 0
+    siteList[building.site].timestamp = e.target.checked ? Date.now() : 0
   })
   const middle = createE('div', 'container', '', '', div)
-  const progress = createE('progress', '', `progress-${num}`, '', middle)
-  progress.max = v.capacity
-  progress.value = v.amount
+  const progress = createE('progress', '', `progress-${building.site}`, '', middle)
+  progress.max = building.capacity
+  progress.value = building.amount
   const bottom = createE('div', 'container', '', '', div)
-  const detailButton = createE('button', '', `button-${num}`, '+', bottom)
-  createE('span', '', `content-${num}`, v.content, bottom)
-  createE('span', '', `amount-${num}`, `${v.amount} of ${v.capacity}`, bottom)
-  const outputBox = createE('div', 'box', `detail-${num}`, '', div)
+  const detailButton = createE('button', '', `button-${building.site}`, '+', bottom)
+  createE('span', '', `content-${building.site}`, building.content, bottom)
+  createE('span', '', `amount-${building.site}`, `${building.amount} of ${building.capacity}`, bottom)
+  const outputBox = createE('div', 'box', `detail-${building.site}`, '', div)
   const outputContainer = createE('div', 'container', '', '', outputBox)
   const outputButton = createE('button', '', '', '+', outputContainer)
   createE('span', '', '', 'Output', outputContainer)
   createE(
-    'span', '', `output-${num}`, `${v.output} ${siteList[v.output].name}`, outputContainer)
+    'span', '', `output-${building.site}`,
+    `${building.output} ${siteList[building.output].name}`, outputContainer)
   let outputList = []
   let outputButtonList = []
   siteList.forEach((value, index) => {
-    BUILDING_OBJECT[v.name].acceptable.forEach(val => {
+    BUILDING_OBJECT[building.name].acceptable.forEach(val => {
       if (val === value.name) {
         const outputItem = createE('div', 'container', '', '', div)
         outputList.push(outputItem)
         createE('span', '', '', `${index} ${val}`, outputItem)
-        const button = createE('button', '', `output-${num}-${index}`, '->', outputItem)
+        const button = createE('button', '', `output-${building.site}-${index}`, '->', outputItem)
         outputButtonList.push(button)
         button.addEventListener('click', () => {
-          rewriteOutput(num, index)
+          rewriteOutput(building.site, index)
           outputButtonList.forEach(v => v.style.display = 'flex')
           button.style.display = 'none'
         })
-        if (v.output === index) button.style.display = 'none'
+        if (building.output === index) button.style.display = 'none'
       }
     })
   })
@@ -393,20 +397,20 @@ const generateSite = (v, num) => {
     const sortingItem = createE('div', 'container', '', '', div)
     sortingList.push(sortingItem)
 
-    if (i === num) createE('span', '', '', 'Current', sortingItem)
+    if (i === building.site) createE('span', '', '', 'Current', sortingItem)
     else {
       if (i === 0) {
         createE('span', '', '', `Above ${v.site}`, sortingItem)
       } else if (i === siteList.length - 1) {
         createE('span', '', '', `Below ${v.site}`, sortingItem)
       } else {
-        const smallerNum = v.site - 1 === num ? v.site : v.site - 1
-        const largerNum = v.site + 1 === num ? v.site : v.site + 1
+        const smallerNum = v.site - 1 === building.site ? v.site : v.site - 1
+        const largerNum = v.site + 1 === building.site ? v.site : v.site + 1
         createE('span', '', '', `${smallerNum} and ${largerNum}`, sortingItem)
       }
-      const button = createE('button', '', `sorting-${num}-${i}`, '->', sortingItem)
+      const button = createE('button', '', `sorting-${building.site}-${i}`, '->', sortingItem)
       sortingButtonList.push(button)
-      button.addEventListener('click', () => rewriteSite(num, i))
+      button.addEventListener('click', () => rewriteSite(building.site, i))
     }
   })
   const conversionBox = createE('div', 'box', '', '', div)
@@ -414,7 +418,7 @@ const generateSite = (v, num) => {
   const conversionButton = createE('button', '', '', '+', conversionContainer)
   createE('span', '', '', 'Conversion Information', conversionContainer)
   let conversionList = []
-  BUILDING_OBJECT[v.name].conversion.forEach(val => {
+  BUILDING_OBJECT[building.name].conversion.forEach(val => {
     const conversion = createE('div', 'container', '', '', div)
     conversionList.push(conversion)
     createE('span', '', '', `1 ${val.from} -> ${val.efficiency} ${val.to}`, conversion)
@@ -448,7 +452,7 @@ const generateSite = (v, num) => {
     })
   })
 }
-const generateMarket = (v, n) => {
+const generateMarket = (v) => {
   const createE = (e, c, i = '', t = '', a) => {
     const element = document.createElement(e)
     if (c !== '') element.className = c
@@ -464,12 +468,14 @@ const generateMarket = (v, n) => {
   const span = createE('span', '', '', '', container)
   createE('span', '', '', `Cost ${v.value} ${v.unit} `, span)
   const button = createE('button', '', '', 'Install', span)
-  button.addEventListener('click', () => {
-    const building = buildingGenerator(n)
+  button.addEventListener('click', async () => {
+    const building = buildingGenerator(v.site)
     building.output = building.site = siteList.length
-    console.log('v',v, 'n', n, 'l', siteList.length)
+    console.log('v',v, 'n', v.site, 'l', siteList.length)
     console.log(building)
-    putStore(building)
+    siteList.push(building)
+    await putStore(building)
+    generateSite(building)
   })
   createE('progress', '', '', '', box)
 }
@@ -477,8 +483,8 @@ const displayElements = () => {
   return new Promise(resolve => {
     document.getElementById`site`.textContent = 'Site'
     document.getElementById`market`.textContent = 'Market'
-    siteList.forEach((v, i) => generateSite(v, i))
-    marketList.forEach((v, i) => generateMarket(v, i))
+    siteList.forEach(v => generateSite(v))
+    marketList.forEach(v => generateMarket(v))
     resolve()
   })
 }
