@@ -99,7 +99,7 @@ const openDb = () => {
       console.log('open DB success')
       db = request.result
       await setDbFirst().catch( async () => {
-        await Promise.all(STORE_NAME_LIST.map(async v => {await getDbForBuffer(v)}))
+        await Promise.all(STORE_NAME_LIST.map(async v => await getDbForBuffer(v)))
       })
       await generateElementToBody()
       await displaySite()
@@ -115,7 +115,7 @@ const openDb = () => {
         siteList.push(FIRST_BUILDING_LIST[i])
       })
       Object.keys(BUILDING_OBJECT).forEach((v, i) => {
-        marketList.push(BUILDING_OBJECT[v])
+        marketList.push(BUILDING_OBJECT[v].price)
         marketList[i]['name'] = Object.keys(BUILDING_OBJECT)[i]
         marketList[i][ID_NAME] = i
       })
@@ -130,9 +130,7 @@ const deleteDb = (bool = true) => {
   const deleteRequest = indexedDB.deleteDatabase(DB_NAME)
   deleteRequest.onsuccess = () => {
     console.log('delete DB success')
-    console.log(siteList.length)
     STORE_NAME_LIST.forEach(v => LOCAL_BUFFER_OBJECT[v].length = 0)
-    console.log(siteList.length)
     if (bool) openDb()
   }
   deleteRequest.onblocked = () => {
