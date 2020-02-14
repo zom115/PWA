@@ -1,12 +1,13 @@
 {'use strict'
+let openTime = Date.now()
 const PATH = 'scripts/sw.js'
 navigator.serviceWorker.register(PATH)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register(PATH).then(registration => {
-      console.log('ServiceWorker registration successful with scope: ', registration.scope)
+      // console.log('ServiceWorker registration successful with scope: ', registration.scope)
     }, err => {
-      console.log('ServiceWorker registration failed: ', err)
+      // console.log('ServiceWorker registration failed: ', err)
     })
   })
 }
@@ -91,27 +92,30 @@ const FIRST_BUILDING_LIST = [{
 }]
 const WEIGHT_TIME = 1e3
 let db
-let initializeFlag = false
 const openDb = () => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION)
     request.onsuccess = async () => {
       console.log('open DB success')
       db = request.result
-      if (initializeFlag) {
-        initializeFlag = false
-        initializeDb()
-      }
-      await setDbForBuffer()
+      await setDbFirst().catch(() => getDbForBuffer())
       await generateElementToBody()
       await displaySite()
       resolve()
     }
     request.onupgradeneeded = e => {
       console.log('openDb.onupgradeneeded')
-      initializeFlag = true
       STORE_NAME_LIST.forEach(v => {
         e.target.result.createObjectStore(v, {keyPath: ID_NAME})
+      })
+      FIRST_BUILDING_LIST.forEach((v, i) => {
+        v[ID_NAME] = i
+        siteList.push(FIRST_BUILDING_LIST[i])
+      })
+      Object.keys(BUILDING_OBJECT).forEach((v, i) => {
+        marketList.push(BUILDING_OBJECT[v])
+        marketList[i]['name'] = Object.keys(BUILDING_OBJECT)[i]
+        marketList[i][ID_NAME] = i
       })
     }
     request.onerror = e => {
@@ -133,25 +137,7 @@ const deleteDb = (bool = true) => {
   }
   deleteRequest.onerror = () => console.log('delete DB error')
 }
-const initializeDb = () => {
-  console.log('initialize ...')
-  const putMarketStore = arg => {
-    const store = getObjectStore(STORE_NAME_LIST[1], 'readwrite')
-    const request1 = store.put(arg)
-    request1.onsuccess = () => {
-    }
-  }
-  FIRST_BUILDING_LIST.forEach((v, i) => {
-    v[ID_NAME] = i
-    putStore(FIRST_BUILDING_LIST[i])
-  })
-  Object.keys(BUILDING_OBJECT).forEach((v, i) => {
-    marketList.push(BUILDING_OBJECT[v])
-    marketList[i][ID_NAME] = i
-    putMarketStore(marketList[i])
-  })
-}
-const setDbForBuffer = () => {
+const getDbForBuffer = () => {
   return new Promise(resolve => {
     const store = getObjectStore(STORE_NAME_LIST[0], 'readonly')
     store.openCursor().onsuccess = e => {
@@ -166,9 +152,28 @@ const setDbForBuffer = () => {
     }
   })
 }
+const setDbFirst = () => {
+  return new Promise((resolve, reject) => {
+    if (siteList.length === 0) {
+      reject()
+    } else {
+      STORE_NAME_LIST.forEach(v => {
+        LOCAL_BUFFER_OBJECT[v].forEach(val => {
+          putEveryStore(v, val)
+        })
+      })
+      resolve()
+    }
+  })
+}
 const getObjectStore = (store_name, mode) => {
   const tx = db.transaction(store_name, mode)
   return tx.objectStore(store_name)
+}
+const putEveryStore = (storeName, obj) => {
+  const store = getObjectStore(storeName, 'readwrite')
+  const request1 = store.put(obj)
+  request1.onsuccess = () => {}
 }
 const putStore = (site1, site2) => {
   const store = getObjectStore(STORE_NAME_LIST[0], 'readwrite')
@@ -186,10 +191,8 @@ const getDb = num => {
     store.openCursor().onsuccess = e => {
       const cursor = e.target.result
       if (cursor) {
-        console.log(cursor.key, cursor.value)
         cursor.continue()
       } else {
-        console.log('end')
         resolve()
       }
     }
@@ -215,8 +218,8 @@ const rewriteOutput = (former, i) => {
   // element update
   document.getElementById(`output-${former}`).textContent = `${i} ${siteList[i].name}`
 }
-const rewriteLine = (former, i) => {
-  console.log('rewrite line')
+const rewriteSite = (former, i) => {
+  console.log('rewrite site')
   siteList.splice(i, 0, siteList.splice(former, 1)[0])
   siteList.forEach((v, index) => {
     if (v.output === former) v.output = i
@@ -229,6 +232,42 @@ const rewriteLine = (former, i) => {
     putStore(v)
   })
   displaySite()
+}
+const rewriteConvert = targetSite => {
+  const out = siteList[targetSite.output]
+  BUILDING_OBJECT[targetSite.name].conversion.forEach(v => {
+    const time = Math.abs(
+      targetSite.site - siteList[targetSite.output].site) * WEIGHT_TIME
+    if (
+      v.from === targetSite.content && 0 < targetSite.amount &&
+      out.amount + v.efficiency * 1 <= out.capacity && time !== 0
+    ) {
+      if (targetSite.timestamp + time <= Date.now()) {
+        // local list update
+        targetSite.amount -= 1
+        out.content = v.to
+        out.amount += v.efficiency * 1
+        targetSite.timestamp += time
+        // db update
+        putStore(targetSite, out)
+        // element update
+        document.getElementById(`amount-${targetSite.site}`).textContent =
+        `${targetSite.amount} of ${targetSite.capacity}`
+        document.getElementById(`content-${out.site}`).textContent = out.content
+        document.getElementById(
+          `amount-${out.site}`).textContent = `${out.amount} of ${out.capacity}`
+      }
+    } else {
+      targetSite.timestamp = 0
+      document.getElementById(`checkbox-${targetSite.site}`).checked = false
+      return
+    }
+  })
+}
+const convert = () => {
+  siteList.forEach(v => {
+    if (v.timestamp !== 0) rewriteConvert(v)
+  })
 }
 const generateElementToBody = () => {
   return new Promise(resolve => {
@@ -257,6 +296,11 @@ const generateElementToBody = () => {
       button.textContent = Object.values(v)[0]
       document.body.appendChild(p)
     })
+    document.getElementById`deleteDb`.addEventListener('click', () => deleteDb())
+    document.getElementById`deleteDev`.addEventListener('click', () => deleteDb(false))
+    document.getElementById`showSiteDb`.addEventListener('click', () => getDb(0))
+    document.getElementById`showMarketDb`.addEventListener('click', () => getDb(1))
+    document.getElementById`showSite`.addEventListener('click', () => console.log(siteList))
     const p = document.createElement`p`
     p.className = 'container'
     p.textContent = 'Connected Time'
@@ -363,9 +407,7 @@ const generateSite = (v, num) => {
       }
       const button = createE('button', '', `sorting-${num}-${i}`, '->', sortingItem)
       sortingButtonList.push(button)
-      button.addEventListener('click', () => {
-        rewriteLine(num, i)
-      })
+      button.addEventListener('click', () => rewriteSite(num, i))
     }
   })
   const conversionBox = createE('div', 'box', '', '', div)
@@ -414,80 +456,31 @@ const displaySite = () => {
     resolve()
   })
 }
-let openTime = Date.now()
-const formatTime = argTime => {
-  const mm = ('0' + Math.floor(argTime / 6e4)).slice(-2)
-  const ss = ('0' + Math.floor(argTime % 6e4 / 1e3)).slice(-2)
-  const ms = ('00' + argTime % 1e3).slice(-3)
-  let time = ms
-  if (0 < mm || 0 < ss) time = ss + ':' + time
-  if (0 < mm) time = mm + ':' + time
-  return time
-}
-const addEventListeners = async () => {
-  return new Promise(resolve => {
-    // document.getElementById`clear`.addEventListener('click', () => clearObjectStore(storeName))
-    document.getElementById`deleteDb`.addEventListener('click', () => deleteDb())
-    document.getElementById`deleteDev`.addEventListener('click', () => deleteDb(false))
-    document.getElementById`showSiteDb`.addEventListener('click', () => getDb(0))
-    document.getElementById`showMarketDb`.addEventListener('click', () => getDb(1))
-    document.getElementById`showSite`.addEventListener('click', () => console.log(siteList))
-    resolve()
-  })
-}
-const rewriteConvert = targetSite => {
-  const out = siteList[targetSite.output]
-  BUILDING_OBJECT[targetSite.name].conversion.forEach(v => {
-    const time = Math.abs(
-      targetSite.site - siteList[targetSite.output].site) * WEIGHT_TIME
-    if (
-      v.from === targetSite.content && 0 < targetSite.amount &&
-      out.amount + v.efficiency * 1 <= out.capacity && time !== 0
-    ) {
-      if (targetSite.timestamp + time <= Date.now()) {
-        // local list update
-        targetSite.amount -= 1
-        out.content = v.to
-        out.amount += v.efficiency * 1
-        targetSite.timestamp += time
-        // db update
-        putStore(targetSite, out)
-        // element update
-        document.getElementById(`amount-${targetSite.site}`).textContent =
-        `${targetSite.amount} of ${targetSite.capacity}`
-        document.getElementById(`content-${out.site}`).textContent = out.content
-        document.getElementById(
-          `amount-${out.site}`).textContent = `${out.amount} of ${out.capacity}`
-      }
-    } else {
-      targetSite.timestamp = 0
-      document.getElementById(`checkbox-${targetSite.site}`).checked = false
-      return
-    }
-  })
-}
-const convert = () => {
-  siteList.forEach(v => {
-    if (v.timestamp !== 0) rewriteConvert(v)
-  })
-}
 const displayUpdate = () => {
   siteList.forEach(v => {
     const progress = document.getElementById(`progress-${v.site}`)
     progress.max = v.capacity
     progress.value = v.amount
   })
+  const formatTime = argTime => {
+    const mm = ('0' + Math.floor(argTime / 6e4)).slice(-2)
+    const ss = ('0' + Math.floor(argTime % 6e4 / 1e3)).slice(-2)
+    const ms = ('00' + argTime % 1e3).slice(-3)
+    let time = ms
+    if (0 < mm || 0 < ss) time = ss + ':' + time
+    if (0 < mm) time = mm + ':' + time
+    return time
+  }
   document.getElementById`connectedTime`.textContent = formatTime(Date.now() - openTime)
 }
+const asyncFn = async () => {
+  await openDb()
+  main()
+}
+asyncFn()
 const main = () => {
   convert()
   displayUpdate()
   window.requestAnimationFrame(main)
 }
-const asyncFunc = async () => {
-  await openDb()
-  await addEventListeners()
-  main()
-}
-asyncFunc()
 }
