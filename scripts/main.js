@@ -31,7 +31,7 @@ const BUILDING_OBJECT = {
       efficiency: 1
     }],
     price: {
-      value: 40,
+      value: 32+8,
       unit: MATERIAL_LIST[0]
     }
   }, [WORD_LIST[1]]: {
@@ -43,7 +43,7 @@ const BUILDING_OBJECT = {
       efficiency: 2
     }],
     price: {
-      value: 40,
+      value: 64+16,
       unit: MATERIAL_LIST[0]
     }
   }, [WORD_LIST[2]]: {
@@ -55,8 +55,8 @@ const BUILDING_OBJECT = {
       efficiency: 1
     }],
     price: {
-      value: 40,
-      unit: MATERIAL_LIST[0]
+      value: 128+32,
+      unit: MATERIAL_LIST[1]
     }
   }
 }
