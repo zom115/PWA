@@ -1,65 +1,65 @@
 {'use strict'
-const path = 'scripts/sw.js'
-navigator.serviceWorker.register(path)
+const PATH = 'scripts/sw.js'
+navigator.serviceWorker.register(PATH)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register(path).then(registration => {
+    navigator.serviceWorker.register(PATH).then(registration => {
       console.log('ServiceWorker registration successful with scope: ', registration.scope)
     }, err => {
       console.log('ServiceWorker registration failed: ', err)
     })
   })
 }
-const dbName = 'indexedDB'
-const dbVersion = 1
-const storeName = ['site', 'market', 'statistics', 'setting']
-const idName = 'site'
-const localBuffer = {[storeName[0]]: []}
-const site = localBuffer[storeName[0]]
-const wordList = ['Storage Tank', 'Generator Engine', 'Rig']
-const materialList = ['Crude', 'EU']
-const buildingList = {
-  [wordList[0]]: {
-    acceptor: [wordList[0], wordList[2]],
+const DB_NAME = 'indexedDB'
+const DB_VERSION = 1
+const STORE_NAME_LIST = ['site', 'market', 'statistics', 'setting']
+const ID_NAME = 'site'
+const localBuffer = {[STORE_NAME_LIST[0]]: []}
+const site = localBuffer[STORE_NAME_LIST[0]]
+const WORD_LIST = ['Storage Tank', 'Generator Engine', 'Rig']
+const MATERIAL_LIST = ['Crude', 'EU']
+const BUILDING_LIST = {
+  [WORD_LIST[0]]: {
+    acceptor: [WORD_LIST[0], WORD_LIST[2]],
     conversion: [{
-      from: materialList[0],
-      to: materialList[0],
+      from: MATERIAL_LIST[0],
+      to: MATERIAL_LIST[0],
       efficiency: 1
     }]
-  }, [wordList[1]]: {
-    acceptor: [wordList[0], wordList[2]],
+  }, [WORD_LIST[1]]: {
+    acceptor: [WORD_LIST[0], WORD_LIST[2]],
     conversion: [{
-      from: materialList[0],
-      to: materialList[1],
+      from: MATERIAL_LIST[0],
+      to: MATERIAL_LIST[1],
       efficiency: 2
     }]
-  }, [wordList[2]]: {
-    acceptor: [wordList[1]],
+  }, [WORD_LIST[2]]: {
+    acceptor: [WORD_LIST[1]],
     conversion: [{
-      from: materialList[1],
-      to: materialList[0],
+      from: MATERIAL_LIST[1],
+      to: MATERIAL_LIST[0],
       efficiency: 1
     }]
   }
 }
-Object.keys(buildingList).forEach(v => {
-  buildingList[v].acceptable = []
-  Object.keys(buildingList).forEach(val => {
-    if (buildingList[val].acceptor.some(value => v === value)) {
-      buildingList[v].acceptable.push(val)
+Object.keys(BUILDING_LIST).forEach(v => {
+  BUILDING_LIST[v].acceptable = []
+  Object.keys(BUILDING_LIST).forEach(val => {
+    if (BUILDING_LIST[val].acceptor.some(value => v === value)) {
+      BUILDING_LIST[v].acceptable.push(val)
     }
   })
 })
 const firstBuildingArray = [{
-  name: wordList[0],
+  name: WORD_LIST[0],
   output: 0,
   amount: 8,
   capacity: 40,
-  content: materialList[0],
+  content: MATERIAL_LIST[0],
   value: 8,
   timestamp: 0
 }, {
-  name: wordList[1],
+  name: WORD_LIST[1],
   output: 2,
   amount: 0,
   capacity: 20,
@@ -67,7 +67,7 @@ const firstBuildingArray = [{
   value: 0,
   timestamp: 0
 }, {
-  name: wordList[2],
+  name: WORD_LIST[2],
   output: 0,
   amount: 0,
   capacity: 10,
@@ -75,12 +75,12 @@ const firstBuildingArray = [{
   value: 0,
   timestamp: 0
 }]
-const distanceWeightTime = 1e3
+const WEIGHT_TIME = 1e3
 let db
 let initializeFlag = false
 const openDb = () => {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(dbName, dbVersion)
+    const request = indexedDB.open(DB_NAME, DB_VERSION)
     request.onsuccess = async () => {
       db = request.result
       if (initializeFlag) {
@@ -95,8 +95,8 @@ const openDb = () => {
     request.onupgradeneeded = e => {
       console.log('openDb.onupgradeneeded')
       initializeFlag = true
-      storeName.forEach(v => {
-        e.target.result.createObjectStore(v, {keyPath: idName})
+      STORE_NAME_LIST.forEach(v => {
+        e.target.result.createObjectStore(v, {keyPath: ID_NAME})
       })
     }
     request.onerror = e => {
@@ -106,7 +106,7 @@ const openDb = () => {
   })
 }
 const deleteDb = (bool = true) => {
-  const deleteRequest = indexedDB.deleteDatabase(dbName)
+  const deleteRequest = indexedDB.deleteDatabase(DB_NAME)
   deleteRequest.onsuccess = () => {
     console.log('delete DB success')
     site.length = 0
@@ -120,13 +120,13 @@ const deleteDb = (bool = true) => {
 }
 const initializeDb = () => {
   firstBuildingArray.forEach((v, i) => {
-    v[idName] = i
+    v[ID_NAME] = i
     putData(firstBuildingArray[i])
   })
 }
 const setDbForBuffer = () => {
   return new Promise(resolve => {
-    const store = getObjectStore(storeName[0], 'readonly')
+    const store = getObjectStore(STORE_NAME_LIST[0], 'readonly')
     store.openCursor().onsuccess = e => {
       const cursor = e.target.result
       if (cursor) {
@@ -145,7 +145,7 @@ const getObjectStore = (store_name, mode) => {
 }
 const getDb = num => {
   return new Promise(resolve => {
-    const store = getObjectStore(storeName[num], 'readonly')
+    const store = getObjectStore(STORE_NAME_LIST[num], 'readonly')
     store.openCursor().onsuccess = e => {
       const cursor = e.target.result
       if (cursor) {
@@ -188,7 +188,6 @@ const rewriteLine = (former, i) => {
     } else {
       if (i <= v.output && v.output <= former) v.output += 1
     }
-
     v.site = index
     putData(v)
   })
@@ -230,7 +229,7 @@ const generateColumn = (v, num) => {
     'span', '', `output-${num}`, `${v.output} ${site[v.output].name}`, outputContainer)
   let outputList = []
   let outputButtonList = []
-  buildingList[v.name].acceptable.forEach(val => {
+  BUILDING_LIST[v.name].acceptable.forEach(val => {
     site.forEach((value, index) => {
       if (val === value.name) {
         const outputColumn = createE('div', 'container', '', '', div)
@@ -295,7 +294,7 @@ const generateColumn = (v, num) => {
   const conversionButton = createE('button', '', '', '+', conversionContainer)
   createE('span', '', '', 'Conversion Information', conversionContainer)
   let conversionList = []
-  buildingList[v.name].conversion.forEach(val => {
+  BUILDING_LIST[v.name].conversion.forEach(val => {
     const conversion = createE('div', 'container', '', '', div)
     conversionList.push(conversion)
     createE('span', '', '', `1 ${val.from} -> ${val.efficiency} ${val.to}`, conversion)
@@ -311,7 +310,6 @@ const generateColumn = (v, num) => {
   const buttonList = [outputButton, sortingExpandButton, conversionButton]
   const constList = [outputList, sortingList, conversionList]
   constList.forEach(v => v.forEach(val => val.style.display = 'none'))
-
   detailButton.addEventListener('click', () => {
     detailButton.textContent = detailButton.textContent === '+' ? '-' : '+'
     boxList.forEach(v => v.style.display = v.style.display === 'none' ? 'flex' : 'none')
@@ -338,7 +336,7 @@ const displayColumn = () => {
   })
 }
 const putData = (site1, site2) => {
-  const store = getObjectStore(storeName[0], 'readwrite')
+  const store = getObjectStore(STORE_NAME_LIST[0], 'readwrite')
   const request1 = store.put(site1)
   request1.onsuccess = () => {
     if (site2 === undefined) {
@@ -372,9 +370,9 @@ const addEventListeners = async () => {
 const rewriteConvert = targetSite => {
   // local list update
   const out = site[targetSite.output]
-  buildingList[targetSite.name].conversion.forEach(v => {
+  BUILDING_LIST[targetSite.name].conversion.forEach(v => {
     const time = Math.abs(
-      targetSite.site - site[targetSite.output].site) * distanceWeightTime
+      targetSite.site - site[targetSite.output].site) * WEIGHT_TIME
     if (
       v.from === targetSite.content && 0 < targetSite.amount &&
       out.amount + v.efficiency * 1 <= out.capacity && time !== 0
