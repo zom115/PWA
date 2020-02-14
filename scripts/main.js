@@ -98,7 +98,9 @@ const openDb = () => {
     request.onsuccess = async () => {
       console.log('open DB success')
       db = request.result
-      await setDbFirst().catch(() => getDbForBuffer())
+      await setDbFirst().catch( async () => {
+        await Promise.all(STORE_NAME_LIST.map(async v => {await getDbForBuffer(v)}))
+      })
       await generateElementToBody()
       await displaySite()
       resolve()
@@ -128,7 +130,7 @@ const deleteDb = (bool = true) => {
   const deleteRequest = indexedDB.deleteDatabase(DB_NAME)
   deleteRequest.onsuccess = () => {
     console.log('delete DB success')
-    siteList.length = 0
+    STORE_NAME_LIST.forEach(v => LOCAL_BUFFER_OBJECT[v].length = 0)
     if (bool) openDb()
   }
   deleteRequest.onblocked = () => {
@@ -137,13 +139,13 @@ const deleteDb = (bool = true) => {
   }
   deleteRequest.onerror = () => console.log('delete DB error')
 }
-const getDbForBuffer = () => {
+const getDbForBuffer = storeName => {
   return new Promise(resolve => {
-    const store = getObjectStore(STORE_NAME_LIST[0], 'readonly')
+    const store = getObjectStore(storeName, 'readonly')
     store.openCursor().onsuccess = e => {
       const cursor = e.target.result
       if (cursor) {
-        siteList.push(cursor.value)
+        LOCAL_BUFFER_OBJECT[storeName].push(cursor.value)
         cursor.continue()
       } else {
         console.log('set DB contents for buffer successful')
@@ -153,17 +155,15 @@ const getDbForBuffer = () => {
   })
 }
 const setDbFirst = () => {
-  return new Promise((resolve, reject) => {
-    if (siteList.length === 0) {
-      reject()
-    } else {
-      STORE_NAME_LIST.forEach(v => {
-        LOCAL_BUFFER_OBJECT[v].forEach(val => {
-          putEveryStore(v, val)
-        })
-      })
-      resolve()
+  return new Promise( async (resolve, reject) => {
+    if (LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[0]].length === 0) reject()
+    const fn = async v => {
+      await Promise.all(LOCAL_BUFFER_OBJECT[v].map(async val => {
+        await putEveryStore(v, val)
+      }))
     }
+    await Promise.all(STORE_NAME_LIST.map(async v => {await fn(v)}))
+    resolve()
   })
 }
 const getObjectStore = (store_name, mode) => {
@@ -171,9 +171,12 @@ const getObjectStore = (store_name, mode) => {
   return tx.objectStore(store_name)
 }
 const putEveryStore = (storeName, obj) => {
-  const store = getObjectStore(storeName, 'readwrite')
-  const request1 = store.put(obj)
-  request1.onsuccess = () => {}
+  return new Promise(resolve => {
+    const store = getObjectStore(storeName, 'readwrite')
+    const request1 = store.put(obj)
+    request1.onsuccess = () => {resolve()}
+    request1.onerror = e => {console.log(e.target.errorCode)}
+  })
 }
 const putStore = (site1, site2) => {
   const store = getObjectStore(STORE_NAME_LIST[0], 'readwrite')
@@ -449,10 +452,26 @@ const generateSite = (v, num) => {
     })
   })
 }
+const generateMarket = (v, n) => {
+  const createE = (e, c, i = '', t = '', a) => {
+    const element = document.createElement(e)
+    if (c !== '') element.className = c
+    if (i !== '') element.id = i
+    element.textContent = t
+    if (a !== undefined) a.appendChild(element)
+    return element
+  }
+  const marketItem = document.getElementById`market`
+  const box = createE('div', 'box', '', '', marketItem)
+  const container = createE('div', 'container', '', '', box)
+  createE('span', '', '', v.name, container)
+}
 const displaySite = () => {
   return new Promise(resolve => {
-    document.getElementById`site`.textContent = null
+    document.getElementById`site`.textContent = 'Site'
+    document.getElementById`market`.textContent = 'Market'
     siteList.forEach((v, i) => generateSite(v, i))
+    marketList.forEach((v, i) => generateMarket(v, i))
     resolve()
   })
 }
