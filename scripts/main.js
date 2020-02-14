@@ -96,14 +96,15 @@ const openDb = () => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION)
     request.onsuccess = async () => {
+      console.log('open DB success')
       db = request.result
       if (initializeFlag) {
         initializeFlag = false
         initializeDb()
       }
       await setDbForBuffer()
+      await generateElementToBody()
       await displayColumn()
-      console.log('open DB success')
       resolve()
     }
     request.onupgradeneeded = e => {
@@ -229,6 +230,44 @@ const rewriteLine = (former, i) => {
   })
   displayColumn()
 }
+const BUTTON_LIST = [{
+  showSiteDb: 'showSiteDbOnConsole'
+}, {showMarketDb: 'showMarketDbOnConsole'
+}, {showSite: 'showSiteOnConsole'
+}, {clear: 'Clear'
+}, {deleteDb: 'DeleteDb'
+}, {deleteDev: 'DeleteDb(no remake)'
+}]
+const generateElementToBody = () => {
+  return new Promise(resolve => {
+    STORE_NAME_LIST.forEach(v => {
+      const div = document.createElement`div`
+      div.id = v
+      document.body.appendChild(div)
+    })
+    BUTTON_LIST.forEach(v => {
+      const p = document.createElement`p`
+      const button = document.createElement`button`
+      p.appendChild(button)
+      button.id = Object.keys(v)[0]
+      button.textContent = Object.values(v)[0]
+      document.body.appendChild(p)
+    })
+    const p = document.createElement`p`
+    p.className = 'container'
+    p.textContent = 'Connected Time'
+    const span = document.createElement`span`
+    p.appendChild(span)
+    span.id = 'connectedTime'
+    const button = document.createElement`button`
+    p.appendChild(button)
+    button.id = 'timeReset'
+    button.textContent = 'Reset'
+    button.addEventListener('click', () => openTime = Date.now())
+    document.body.appendChild(p)
+    resolve()
+  })
+}
 const generateColumn = (v, num) => {
   const createE = (e, c, i = '', t = '', a) => {
     const element = document.createElement(e)
@@ -238,8 +277,8 @@ const generateColumn = (v, num) => {
     if (a !== undefined) a.appendChild(element)
     return element
   }
-  const column = document.getElementById`column`
-  const div = createE('div', 'box', '', '', column)
+  const siteColumn = document.getElementById`site`
+  const div = createE('div', 'box', '', '', siteColumn)
   const top = createE('div', 'container', '', '', div)
   createE('span', '', `site-${num}`, `${num} ${v.name}`, top)
   createE('span','',`time-${num}`, '', top)
@@ -282,7 +321,6 @@ const generateColumn = (v, num) => {
       }
     })
   })
-  console.log(outputList)
   /*
   const sendBox = createE('div', 'box', '', '', div)
   const sendContainer = createE('div', 'container', '', '', sendBox)
@@ -367,13 +405,12 @@ const generateColumn = (v, num) => {
 }
 const displayColumn = () => {
   return new Promise(resolve => {
-    document.getElementById`column`.textContent = null
+    document.getElementById`site`.textContent = null
     siteList.forEach((v, i) => generateColumn(v, i))
     resolve()
   })
 }
 let openTime = Date.now()
-document.getElementById`timeReset`.addEventListener('click', () => openTime = Date.now())
 const formatTime = argTime => {
   const mm = ('0' + Math.floor(argTime / 6e4)).slice(-2)
   const ss = ('0' + Math.floor(argTime % 6e4 / 1e3)).slice(-2)
@@ -436,16 +473,16 @@ const displayUpdate = () => {
     progress.max = v.capacity
     progress.value = v.amount
   })
+  document.getElementById`connectedTime`.textContent = formatTime(Date.now() - openTime)
 }
 const main = () => {
   convert()
   displayUpdate()
-  document.getElementById`conectedTime`.textContent = formatTime(Date.now() - openTime)
   window.requestAnimationFrame(main)
 }
 const asyncFunc = async () => {
   await openDb()
-  addEventListeners()
+  await addEventListeners()
   main()
 }
 asyncFunc()
