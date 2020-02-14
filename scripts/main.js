@@ -394,7 +394,6 @@ const addEventListeners = async () => {
   })
 }
 const rewriteConvert = targetSite => {
-  // local list update
   const out = siteList[targetSite.output]
   BUILDING_OBJECT[targetSite.name].conversion.forEach(v => {
     const time = Math.abs(
@@ -404,10 +403,19 @@ const rewriteConvert = targetSite => {
       out.amount + v.efficiency * 1 <= out.capacity && time !== 0
     ) {
       if (targetSite.timestamp + time <= Date.now()) {
+        // local list update
         targetSite.amount -= 1
         out.content = v.to
         out.amount += v.efficiency * 1
         targetSite.timestamp += time
+        // db update
+        putStore(targetSite, out)
+        // element update
+        document.getElementById(`amount-${targetSite.site}`).textContent =
+        `${targetSite.amount} of ${targetSite.capacity}`
+        document.getElementById(`content-${out.site}`).textContent = out.content
+        document.getElementById(
+          `amount-${out.site}`).textContent = `${out.amount} of ${out.capacity}`
       }
     } else {
       targetSite.timestamp = 0
@@ -415,14 +423,6 @@ const rewriteConvert = targetSite => {
       return
     }
   })
-  // db update
-  putStore(targetSite, out)
-  // element update
-  document.getElementById(`amount-${targetSite.site}`).textContent =
-  `${targetSite.amount} of ${targetSite.capacity}`
-  document.getElementById(`content-${out.site}`).textContent = out.content
-  document.getElementById(
-    `amount-${out.site}`).textContent = `${out.amount} of ${out.capacity}`
 }
 const convert = () => {
   siteList.forEach(v => {
