@@ -24,6 +24,7 @@ const MATERIAL_LIST = ['Crude', 'EU']
 const BUILDING_OBJECT = {
   [WORD_LIST[0]]: {
     acceptor: [WORD_LIST[0], WORD_LIST[2]],
+    capacity: 40,
     conversion: [{
       from: MATERIAL_LIST[0],
       to: MATERIAL_LIST[0],
@@ -35,6 +36,7 @@ const BUILDING_OBJECT = {
     }
   }, [WORD_LIST[1]]: {
     acceptor: [WORD_LIST[0], WORD_LIST[2]],
+    capacity: 20,
     conversion: [{
       from: MATERIAL_LIST[0],
       to: MATERIAL_LIST[1],
@@ -46,6 +48,7 @@ const BUILDING_OBJECT = {
     }
   }, [WORD_LIST[2]]: {
     acceptor: [WORD_LIST[1]],
+    capacity: 10,
     conversion: [{
       from: MATERIAL_LIST[1],
       to: MATERIAL_LIST[0],
@@ -65,31 +68,20 @@ Object.keys(BUILDING_OBJECT).forEach(v => {
     }
   })
 })
-const FIRST_BUILDING_LIST = [{
-  name: WORD_LIST[0],
-  output: 0,
-  amount: 8,
-  capacity: 40,
-  content: MATERIAL_LIST[0],
-  value: 8,
-  timestamp: 0
-}, {
-  name: WORD_LIST[1],
-  output: 2,
-  amount: 0,
-  capacity: 20,
-  content: '',
-  value: 0,
-  timestamp: 0
-}, {
-  name: WORD_LIST[2],
-  output: 0,
-  amount: 0,
-  capacity: 10,
-  content: '',
-  value: 0,
-  timestamp: 0
-}]
+const FIRST_BUILDING_LIST = []
+const buildingGenerator = (index) => {
+  const object = {}
+  object.name = WORD_LIST[index]
+  object.output = index
+  object.amount = 0
+  object.capacity = BUILDING_OBJECT[WORD_LIST[index]].capacity
+  object.content = ''
+  object.timestamp = 0
+  return object
+}
+for (let i = 0; i < 3; i++) FIRST_BUILDING_LIST[i] = buildingGenerator(i)
+FIRST_BUILDING_LIST[0].amount = 8
+FIRST_BUILDING_LIST[0].content = MATERIAL_LIST[0]
 const WEIGHT_TIME = 1e3
 let db
 const openDb = () => {
@@ -102,7 +94,7 @@ const openDb = () => {
         await Promise.all(STORE_NAME_LIST.map(async v => await getDbForBuffer(v)))
       })
       await generateElementToBody()
-      await displaySite()
+      await displayElements()
       resolve()
     }
     request.onupgradeneeded = e => {
@@ -235,7 +227,7 @@ const rewriteSite = (former, i) => {
     v.site = index
     putStore(v)
   })
-  displaySite()
+  displayElements()
 }
 const rewriteConvert = targetSite => {
   const out = siteList[targetSite.output]
@@ -469,8 +461,19 @@ const generateMarket = (v, n) => {
   const box = createE('div', 'box', '', '', marketItem)
   const container = createE('div', 'container', '', '', box)
   createE('span', '', '', v.name, container)
+  const span = createE('span', '', '', '', container)
+  createE('span', '', '', `Cost ${v.value} ${v.unit} `, span)
+  const button = createE('button', '', '', 'Install', span)
+  button.addEventListener('click', () => {
+    const building = buildingGenerator(n)
+    building.output = building.site = siteList.length
+    console.log('v',v, 'n', n, 'l', siteList.length)
+    console.log(building)
+    putStore(building)
+  })
+  createE('progress', '', '', '', box)
 }
-const displaySite = () => {
+const displayElements = () => {
   return new Promise(resolve => {
     document.getElementById`site`.textContent = 'Site'
     document.getElementById`market`.textContent = 'Market'
