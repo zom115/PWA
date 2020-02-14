@@ -104,7 +104,7 @@ const openDb = () => {
       }
       await setDbForBuffer()
       await generateElementToBody()
-      await displayColumn()
+      await displaySite()
       resolve()
     }
     request.onupgradeneeded = e => {
@@ -200,7 +200,7 @@ const getDb = num => {
 //   const store = getObjectStore(store_name, 'readwrite')
 //   const request = store.clear()
 //   request.onsuccess = () => {
-//     displayColumn()
+//     displaySite()
 //     console.log('cleared')
 //   }
 //   request.onerror = e => {
@@ -228,23 +228,27 @@ const rewriteLine = (former, i) => {
     v.site = index
     putStore(v)
   })
-  displayColumn()
+  displaySite()
 }
-const BUTTON_LIST = [{
-  showSiteDb: 'showSiteDbOnConsole'
-}, {showMarketDb: 'showMarketDbOnConsole'
-}, {showSite: 'showSiteOnConsole'
-}, {clear: 'Clear'
-}, {deleteDb: 'DeleteDb'
-}, {deleteDev: 'DeleteDb(no remake)'
-}]
 const generateElementToBody = () => {
   return new Promise(resolve => {
     STORE_NAME_LIST.forEach(v => {
       const div = document.createElement`div`
       div.id = v
+      const di = document.createElement`div`
+      div.appendChild(di)
+      di.className = 'container'
+      di.textContent = v
       document.body.appendChild(div)
     })
+    const BUTTON_LIST = [{
+      showSiteDb: 'showSiteDbOnConsole'
+    }, {showMarketDb: 'showMarketDbOnConsole'
+    }, {showSite: 'showSiteOnConsole'
+    }, {clear: 'Clear'
+    }, {deleteDb: 'DeleteDb'
+    }, {deleteDev: 'DeleteDb(no remake)'
+    }]
     BUTTON_LIST.forEach(v => {
       const p = document.createElement`p`
       const button = document.createElement`button`
@@ -268,7 +272,7 @@ const generateElementToBody = () => {
     resolve()
   })
 }
-const generateColumn = (v, num) => {
+const generateSite = (v, num) => {
   const createE = (e, c, i = '', t = '', a) => {
     const element = document.createElement(e)
     if (c !== '') element.className = c
@@ -277,8 +281,8 @@ const generateColumn = (v, num) => {
     if (a !== undefined) a.appendChild(element)
     return element
   }
-  const siteColumn = document.getElementById`site`
-  const div = createE('div', 'box', '', '', siteColumn)
+  const siteItem = document.getElementById`site`
+  const div = createE('div', 'box', '', '', siteItem)
   const top = createE('div', 'container', '', '', div)
   createE('span', '', `site-${num}`, `${num} ${v.name}`, top)
   createE('span','',`time-${num}`, '', top)
@@ -307,10 +311,10 @@ const generateColumn = (v, num) => {
   siteList.forEach((value, index) => {
     BUILDING_OBJECT[v.name].acceptable.forEach(val => {
       if (val === value.name) {
-        const outputColumn = createE('div', 'container', '', '', div)
-        outputList.push(outputColumn)
-        createE('span', '', '', `${index} ${val}`, outputColumn)
-        const button = createE('button', '', `output-${num}-${index}`, '->', outputColumn)
+        const outputItem = createE('div', 'container', '', '', div)
+        outputList.push(outputItem)
+        createE('span', '', '', `${index} ${val}`, outputItem)
+        const button = createE('button', '', `output-${num}-${index}`, '->', outputItem)
         outputButtonList.push(button)
         button.addEventListener('click', () => {
           rewriteOutput(num, index)
@@ -343,21 +347,21 @@ const generateColumn = (v, num) => {
   let sortingButtonList = []
   createE('span', '', '', 'Sorting', sortingContainer)
   siteList.forEach((v, i) => {
-    const sortingColumn = createE('div', 'container', '', '', div)
-    sortingList.push(sortingColumn)
+    const sortingItem = createE('div', 'container', '', '', div)
+    sortingList.push(sortingItem)
 
-    if (i === num) createE('span', '', '', 'Current', sortingColumn)
+    if (i === num) createE('span', '', '', 'Current', sortingItem)
     else {
       if (i === 0) {
-        createE('span', '', '', `Above ${v.site}`, sortingColumn)
+        createE('span', '', '', `Above ${v.site}`, sortingItem)
       } else if (i === siteList.length - 1) {
-        createE('span', '', '', `Below ${v.site}`, sortingColumn)
+        createE('span', '', '', `Below ${v.site}`, sortingItem)
       } else {
         const smallerNum = v.site - 1 === num ? v.site : v.site - 1
         const largerNum = v.site + 1 === num ? v.site : v.site + 1
-        createE('span', '', '', `${smallerNum} and ${largerNum}`, sortingColumn)
+        createE('span', '', '', `${smallerNum} and ${largerNum}`, sortingItem)
       }
-      const button = createE('button', '', `sorting-${num}-${i}`, '->', sortingColumn)
+      const button = createE('button', '', `sorting-${num}-${i}`, '->', sortingItem)
       sortingButtonList.push(button)
       button.addEventListener('click', () => {
         rewriteLine(num, i)
@@ -403,10 +407,10 @@ const generateColumn = (v, num) => {
     })
   })
 }
-const displayColumn = () => {
+const displaySite = () => {
   return new Promise(resolve => {
     document.getElementById`site`.textContent = null
-    siteList.forEach((v, i) => generateColumn(v, i))
+    siteList.forEach((v, i) => generateSite(v, i))
     resolve()
   })
 }
