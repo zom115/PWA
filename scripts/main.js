@@ -14,43 +14,57 @@ const DB_NAME = 'indexedDB'
 const DB_VERSION = 1
 const STORE_NAME_LIST = ['site', 'market', 'statistics', 'setting']
 const ID_NAME = 'site'
-const localBuffer = {[STORE_NAME_LIST[0]]: []}
-const site = localBuffer[STORE_NAME_LIST[0]]
+const LOCAL_BUFFER_OBJECT = {}
+STORE_NAME_LIST.forEach(v => LOCAL_BUFFER_OBJECT[v] = [])
+const siteList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[0]]
+const marketList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[1]]
 const WORD_LIST = ['Storage Tank', 'Generator Engine', 'Rig']
 const MATERIAL_LIST = ['Crude', 'EU']
-const BUILDING_LIST = {
+const BUILDING_OBJECT = {
   [WORD_LIST[0]]: {
     acceptor: [WORD_LIST[0], WORD_LIST[2]],
     conversion: [{
       from: MATERIAL_LIST[0],
       to: MATERIAL_LIST[0],
       efficiency: 1
-    }]
+    }],
+    price: {
+      value: 40,
+      unit: MATERIAL_LIST[0]
+    }
   }, [WORD_LIST[1]]: {
     acceptor: [WORD_LIST[0], WORD_LIST[2]],
     conversion: [{
       from: MATERIAL_LIST[0],
       to: MATERIAL_LIST[1],
       efficiency: 2
-    }]
+    }],
+    price: {
+      value: 40,
+      unit: MATERIAL_LIST[0]
+    }
   }, [WORD_LIST[2]]: {
     acceptor: [WORD_LIST[1]],
     conversion: [{
       from: MATERIAL_LIST[1],
       to: MATERIAL_LIST[0],
       efficiency: 1
-    }]
+    }],
+    price: {
+      value: 40,
+      unit: MATERIAL_LIST[0]
+    }
   }
 }
-Object.keys(BUILDING_LIST).forEach(v => {
-  BUILDING_LIST[v].acceptable = []
-  Object.keys(BUILDING_LIST).forEach(val => {
-    if (BUILDING_LIST[val].acceptor.some(value => v === value)) {
-      BUILDING_LIST[v].acceptable.push(val)
+Object.keys(BUILDING_OBJECT).forEach(v => {
+  BUILDING_OBJECT[v].acceptable = []
+  Object.keys(BUILDING_OBJECT).forEach(val => {
+    if (BUILDING_OBJECT[val].acceptor.some(value => v === value)) {
+      BUILDING_OBJECT[v].acceptable.push(val)
     }
   })
 })
-const firstBuildingArray = [{
+const FIRST_BUILDING_LIST = [{
   name: WORD_LIST[0],
   output: 0,
   amount: 8,
@@ -109,7 +123,7 @@ const deleteDb = (bool = true) => {
   const deleteRequest = indexedDB.deleteDatabase(DB_NAME)
   deleteRequest.onsuccess = () => {
     console.log('delete DB success')
-    site.length = 0
+    siteList.length = 0
     if (bool) openDb()
   }
   deleteRequest.onblocked = () => {
@@ -119,9 +133,21 @@ const deleteDb = (bool = true) => {
   deleteRequest.onerror = () => console.log('delete DB error')
 }
 const initializeDb = () => {
-  firstBuildingArray.forEach((v, i) => {
+  console.log('initialize ...')
+  const putMarketStore = arg => {
+    const store = getObjectStore(STORE_NAME_LIST[1], 'readwrite')
+    const request1 = store.put(arg)
+    request1.onsuccess = () => {
+    }
+  }
+  FIRST_BUILDING_LIST.forEach((v, i) => {
     v[ID_NAME] = i
-    putData(firstBuildingArray[i])
+    putStore(FIRST_BUILDING_LIST[i])
+  })
+  Object.keys(BUILDING_OBJECT).forEach((v, i) => {
+    marketList.push(BUILDING_OBJECT[v])
+    marketList[i][ID_NAME] = i
+    putMarketStore(marketList[i])
   })
 }
 const setDbForBuffer = () => {
@@ -130,7 +156,7 @@ const setDbForBuffer = () => {
     store.openCursor().onsuccess = e => {
       const cursor = e.target.result
       if (cursor) {
-        site.push(cursor.value)
+        siteList.push(cursor.value)
         cursor.continue()
       } else {
         console.log('set DB contents for buffer successful')
@@ -142,6 +168,16 @@ const setDbForBuffer = () => {
 const getObjectStore = (store_name, mode) => {
   const tx = db.transaction(store_name, mode)
   return tx.objectStore(store_name)
+}
+const putStore = (site1, site2) => {
+  const store = getObjectStore(STORE_NAME_LIST[0], 'readwrite')
+  const request1 = store.put(site1)
+  request1.onsuccess = () => {
+    if (site2 === undefined) {
+    } else {
+      store.put(site2)
+    }
+  }
 }
 const getDb = num => {
   return new Promise(resolve => {
@@ -172,16 +208,16 @@ const getDb = num => {
 // }
 const rewriteOutput = (former, i) => {
   // local list update
-  site[former].output = i
+  siteList[former].output = i
   // db update
-  putData(site[former])
+  putStore(siteList[former])
   // element update
-  document.getElementById(`output-${former}`).textContent = `${i} ${site[i].name}`
+  document.getElementById(`output-${former}`).textContent = `${i} ${siteList[i].name}`
 }
 const rewriteLine = (former, i) => {
   console.log('rewrite line')
-  site.splice(i, 0, site.splice(former, 1)[0])
-  site.forEach((v, index) => {
+  siteList.splice(i, 0, siteList.splice(former, 1)[0])
+  siteList.forEach((v, index) => {
     if (v.output === former) v.output = i
     else if (former < i) {
       if (former <= v.output && v.output <= i) v.output -= 1
@@ -189,7 +225,7 @@ const rewriteLine = (former, i) => {
       if (i <= v.output && v.output <= former) v.output += 1
     }
     v.site = index
-    putData(v)
+    putStore(v)
   })
   displayColumn()
 }
@@ -209,9 +245,9 @@ const generateColumn = (v, num) => {
   createE('span','',`time-${num}`, '', top)
   const checkbox = createE('input', '', `checkbox-${num}`, '', top)
   checkbox.type = 'checkbox'
-  checkbox.checked = site[num].timestamp ? true : false
+  checkbox.checked = siteList[num].timestamp ? true : false
   checkbox.addEventListener('input', e => {
-    site[num].timestamp = e.target.checked ? Date.now() : 0
+    siteList[num].timestamp = e.target.checked ? Date.now() : 0
   })
   const middle = createE('div', 'container', '', '', div)
   const progress = createE('progress', '', `progress-${num}`, '', middle)
@@ -226,11 +262,11 @@ const generateColumn = (v, num) => {
   const outputButton = createE('button', '', '', '+', outputContainer)
   createE('span', '', '', 'Output', outputContainer)
   createE(
-    'span', '', `output-${num}`, `${v.output} ${site[v.output].name}`, outputContainer)
+    'span', '', `output-${num}`, `${v.output} ${siteList[v.output].name}`, outputContainer)
   let outputList = []
   let outputButtonList = []
-  BUILDING_LIST[v.name].acceptable.forEach(val => {
-    site.forEach((value, index) => {
+  BUILDING_OBJECT[v.name].acceptable.forEach(val => {
+    siteList.forEach((value, index) => {
       if (val === value.name) {
         const outputColumn = createE('div', 'container', '', '', div)
         outputList.push(outputColumn)
@@ -267,7 +303,7 @@ const generateColumn = (v, num) => {
   let sortingList = []
   let sortingButtonList = []
   createE('span', '', '', 'Sorting', sortingContainer)
-  site.forEach((v, i) => {
+  siteList.forEach((v, i) => {
     const sortingColumn = createE('div', 'container', '', '', div)
     sortingList.push(sortingColumn)
 
@@ -275,7 +311,7 @@ const generateColumn = (v, num) => {
     else {
       if (i === 0) {
         createE('span', '', '', `Above ${v.site}`, sortingColumn)
-      } else if (i === site.length - 1) {
+      } else if (i === siteList.length - 1) {
         createE('span', '', '', `Below ${v.site}`, sortingColumn)
       } else {
         const smallerNum = v.site - 1 === num ? v.site : v.site - 1
@@ -294,7 +330,7 @@ const generateColumn = (v, num) => {
   const conversionButton = createE('button', '', '', '+', conversionContainer)
   createE('span', '', '', 'Conversion Information', conversionContainer)
   let conversionList = []
-  BUILDING_LIST[v.name].conversion.forEach(val => {
+  BUILDING_OBJECT[v.name].conversion.forEach(val => {
     const conversion = createE('div', 'container', '', '', div)
     conversionList.push(conversion)
     createE('span', '', '', `1 ${val.from} -> ${val.efficiency} ${val.to}`, conversion)
@@ -331,19 +367,9 @@ const generateColumn = (v, num) => {
 const displayColumn = () => {
   return new Promise(resolve => {
     document.getElementById`column`.textContent = null
-    site.forEach((v, i) => generateColumn(v, i))
+    siteList.forEach((v, i) => generateColumn(v, i))
     resolve()
   })
-}
-const putData = (site1, site2) => {
-  const store = getObjectStore(STORE_NAME_LIST[0], 'readwrite')
-  const request1 = store.put(site1)
-  request1.onsuccess = () => {
-    if (site2 === undefined) {
-    } else {
-      store.put(site2)
-    }
-  }
 }
 let openTime = Date.now()
 document.getElementById`timeReset`.addEventListener('click', () => openTime = Date.now())
@@ -363,16 +389,16 @@ const addEventListeners = async () => {
     document.getElementById`deleteDev`.addEventListener('click', () => deleteDb(false))
     document.getElementById`showSiteDb`.addEventListener('click', () => getDb(0))
     document.getElementById`showMarketDb`.addEventListener('click', () => getDb(1))
-    document.getElementById`showSite`.addEventListener('click', () => console.log(site))
+    document.getElementById`showSite`.addEventListener('click', () => console.log(siteList))
     resolve()
   })
 }
 const rewriteConvert = targetSite => {
   // local list update
-  const out = site[targetSite.output]
-  BUILDING_LIST[targetSite.name].conversion.forEach(v => {
+  const out = siteList[targetSite.output]
+  BUILDING_OBJECT[targetSite.name].conversion.forEach(v => {
     const time = Math.abs(
-      targetSite.site - site[targetSite.output].site) * WEIGHT_TIME
+      targetSite.site - siteList[targetSite.output].site) * WEIGHT_TIME
     if (
       v.from === targetSite.content && 0 < targetSite.amount &&
       out.amount + v.efficiency * 1 <= out.capacity && time !== 0
@@ -390,7 +416,7 @@ const rewriteConvert = targetSite => {
     }
   })
   // db update
-  putData(targetSite, out)
+  putStore(targetSite, out)
   // element update
   document.getElementById(`amount-${targetSite.site}`).textContent =
   `${targetSite.amount} of ${targetSite.capacity}`
@@ -399,12 +425,12 @@ const rewriteConvert = targetSite => {
     `amount-${out.site}`).textContent = `${out.amount} of ${out.capacity}`
 }
 const convert = () => {
-  site.forEach(v => {
+  siteList.forEach(v => {
     if (v.timestamp !== 0) rewriteConvert(v)
   })
 }
 const displayUpdate = () => {
-  site.forEach(v => {
+  siteList.forEach(v => {
     const progress = document.getElementById(`progress-${v.site}`)
     progress.max = v.capacity
     progress.value = v.amount
