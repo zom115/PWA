@@ -473,8 +473,8 @@ const generateMarket = (v) => {
     building.output = building.site = siteList.length
     console.log('v',v, 'n', v.site, 'l', siteList.length)
     console.log(building)
-    siteList.push(building)
     await putStore(building)
+    siteList.push(building)
     generateSite(building)
   })
   createE('progress', '', '', '', box)
