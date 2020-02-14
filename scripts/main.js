@@ -471,6 +471,7 @@ const generateMarket = (v) => {
   button.addEventListener('click', async () => {
     const building = buildingGenerator(v.site)
     building.output = building.site = siteList.length
+    building.amount = -v.value
     console.log('v',v, 'n', v.site, 'l', siteList.length)
     console.log(building)
     await putStore(building)
