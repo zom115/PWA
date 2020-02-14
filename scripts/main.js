@@ -181,8 +181,15 @@ const rewriteOutput = (former, i) => {
 const rewriteLine = (former, i) => {
   console.log('rewrite line')
   site.splice(i, 0, site.splice(former, 1)[0])
-  site.forEach((v, i) => {
-    v.site = i
+  site.forEach((v, index) => {
+    if (v.output === former) v.output = i
+    else if (former < i) {
+      if (former <= v.output && v.output <= i) v.output -= 1
+    } else {
+      if (i <= v.output && v.output <= former) v.output += 1
+    }
+
+    v.site = index
     putData(v)
   })
   displayColumn()
