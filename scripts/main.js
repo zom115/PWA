@@ -130,7 +130,9 @@ const deleteDb = (bool = true) => {
   const deleteRequest = indexedDB.deleteDatabase(DB_NAME)
   deleteRequest.onsuccess = () => {
     console.log('delete DB success')
+    console.log(siteList.length)
     STORE_NAME_LIST.forEach(v => LOCAL_BUFFER_OBJECT[v].length = 0)
+    console.log(siteList.length)
     if (bool) openDb()
   }
   deleteRequest.onblocked = () => {
@@ -148,7 +150,7 @@ const getDbForBuffer = storeName => {
         LOCAL_BUFFER_OBJECT[storeName].push(cursor.value)
         cursor.continue()
       } else {
-        console.log('set DB contents for buffer successful')
+        console.log(storeName, 'set DB contents for buffer successful')
         resolve()
       }
     }
@@ -194,6 +196,7 @@ const getDb = num => {
     store.openCursor().onsuccess = e => {
       const cursor = e.target.result
       if (cursor) {
+        console.log(cursor.value)
         cursor.continue()
       } else {
         resolve()
@@ -273,6 +276,9 @@ const convert = () => {
   })
 }
 const generateElementToBody = () => {
+  console.log('generate elements')
+  const mainElement = document.getElementById`main`
+  mainElement.textContent = null
   return new Promise(resolve => {
     STORE_NAME_LIST.forEach(v => {
       const div = document.createElement`div`
@@ -281,7 +287,7 @@ const generateElementToBody = () => {
       div.appendChild(di)
       di.className = 'container'
       di.textContent = v
-      document.body.appendChild(div)
+      mainElement.appendChild(div)
     })
     const BUTTON_LIST = [{
       showSiteDb: 'showSiteDbOnConsole'
@@ -297,13 +303,13 @@ const generateElementToBody = () => {
       p.appendChild(button)
       button.id = Object.keys(v)[0]
       button.textContent = Object.values(v)[0]
-      document.body.appendChild(p)
+      mainElement.appendChild(p)
     })
-    document.getElementById`deleteDb`.addEventListener('click', () => deleteDb())
-    document.getElementById`deleteDev`.addEventListener('click', () => deleteDb(false))
     document.getElementById`showSiteDb`.addEventListener('click', () => getDb(0))
     document.getElementById`showMarketDb`.addEventListener('click', () => getDb(1))
     document.getElementById`showSite`.addEventListener('click', () => console.log(siteList))
+    document.getElementById`deleteDb`.addEventListener('click', () => deleteDb())
+    document.getElementById`deleteDev`.addEventListener('click', () => deleteDb(false))
     const p = document.createElement`p`
     p.className = 'container'
     p.textContent = 'Connected Time'
@@ -315,7 +321,7 @@ const generateElementToBody = () => {
     button.id = 'timeReset'
     button.textContent = 'Reset'
     button.addEventListener('click', () => openTime = Date.now())
-    document.body.appendChild(p)
+    mainElement.appendChild(p)
     resolve()
   })
 }
