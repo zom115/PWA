@@ -16,26 +16,28 @@ const storeName = ['site', 'market', 'statistics', 'setting']
 const idName = 'site'
 const localBuffer = {[storeName[0]]: []}
 const site = localBuffer[storeName[0]]
+const wordList = ['Storage Tank', 'Generator Engine', 'Rig']
+const materialList = ['Crude', 'EU']
 const buildingList = {
-  'Storage Tank': {
-    acceptor: ['Storage Tank', 'Rig'],
+  [wordList[0]]: {
+    acceptor: [wordList[0], wordList[2]],
     conversion: [{
-      from: 'Crude',
-      to: 'Crude',
+      from: materialList[0],
+      to: materialList[0],
       efficiency: 1
     }]
-  }, 'Generator Engine': {
-    acceptor: ['Storage Tank', 'Rig'],
+  }, [wordList[1]]: {
+    acceptor: [wordList[0], wordList[2]],
     conversion: [{
-      from: 'Crude',
-      to: 'EU',
+      from: materialList[0],
+      to: materialList[1],
       efficiency: 2
     }]
-  }, 'Rig': {
-    acceptor: ['Generator Engine'],
+  }, [wordList[2]]: {
+    acceptor: [wordList[1]],
     conversion: [{
-      from: 'EU',
-      to: 'Crude',
+      from: materialList[1],
+      to: materialList[0],
       efficiency: 1
     }]
   }
@@ -49,15 +51,15 @@ Object.keys(buildingList).forEach(v => {
   })
 })
 const firstBuildingArray = [{
-  name: 'Storage Tank',
+  name: wordList[0],
   output: 0,
   amount: 8,
   capacity: 40,
-  content: 'Crude',
+  content: materialList[0],
   value: 8,
   timestamp: 0
 }, {
-  name: 'Generator Engine',
+  name: wordList[1],
   output: 2,
   amount: 0,
   capacity: 20,
@@ -65,7 +67,7 @@ const firstBuildingArray = [{
   value: 0,
   timestamp: 0
 }, {
-  name: 'Rig',
+  name: wordList[2],
   output: 0,
   amount: 0,
   capacity: 10,
