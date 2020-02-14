@@ -265,8 +265,8 @@ const generateColumn = (v, num) => {
     'span', '', `output-${num}`, `${v.output} ${siteList[v.output].name}`, outputContainer)
   let outputList = []
   let outputButtonList = []
-  BUILDING_OBJECT[v.name].acceptable.forEach(val => {
-    siteList.forEach((value, index) => {
+  siteList.forEach((value, index) => {
+    BUILDING_OBJECT[v.name].acceptable.forEach(val => {
       if (val === value.name) {
         const outputColumn = createE('div', 'container', '', '', div)
         outputList.push(outputColumn)
@@ -282,6 +282,7 @@ const generateColumn = (v, num) => {
       }
     })
   })
+  console.log(outputList)
   /*
   const sendBox = createE('div', 'box', '', '', div)
   const sendContainer = createE('div', 'container', '', '', sendBox)
