@@ -20,7 +20,7 @@ STORE_NAME_LIST.forEach(v => LOCAL_BUFFER_OBJECT[v] = [])
 const siteList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[0]]
 const marketList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[1]]
 const statisticsList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[2]]
-const WORD_LIST = ['Storage Tank', 'Generator Engine', 'Rig']
+const WORD_LIST = ['Storage Tank', 'Generator Engine', 'Rig', 'Battery']
 const MATERIAL_LIST = ['Crude', 'EU']
 const BUILDING_OBJECT = {
   [WORD_LIST[0]]: {
@@ -48,15 +48,27 @@ const BUILDING_OBJECT = {
       unit: MATERIAL_LIST[0]
     }
   }, [WORD_LIST[2]]: {
-    acceptor: [WORD_LIST[1]],
-    capacity: 10,
+    acceptor: [WORD_LIST[1], WORD_LIST[3]],
+    capacity: 2 ** 3 + 2,
     conversion: [{
       from: MATERIAL_LIST[1],
       to: MATERIAL_LIST[0],
       efficiency: 1
     }],
     price: {
-      value: 128+32,
+      value: 2 ** 6 + 2 ** 4,
+      unit: MATERIAL_LIST[1]
+    }
+  }, [WORD_LIST[3]]: {
+    acceptor: [WORD_LIST[1]],
+    capacity: 2 ** 6 + 2 ** 4,
+    conversion: [{
+      from: MATERIAL_LIST[1],
+      to: MATERIAL_LIST[1],
+      efficiency: 1
+    }],
+    price: {
+      value: 2 ** 6 + 2 ** 4,
       unit: MATERIAL_LIST[1]
     }
   }
@@ -78,7 +90,7 @@ const SETTING_LIST = [{
   function: () => {deleteDb()}
 }, {
   name: 'Delete DB(No Remake)',
-  funciton: () => {deleteDb(false)}
+  function: () => {deleteDb(false)}
 }]
 Object.keys(BUILDING_OBJECT).forEach(v => {
   BUILDING_OBJECT[v].acceptable = []
