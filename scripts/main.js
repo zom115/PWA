@@ -371,7 +371,7 @@ const generateSite = (building) => {
   siteList.forEach((value, index) => {
     BUILDING_OBJECT[building.name].acceptable.forEach(val => {
       if (val === value.name) {
-        const outputContainer = createE('div', 'container', '', '', box)
+        const outputContainer = createE('div', 'container', '', '', outputBox)
         outputContainerList.push(outputContainer)
         createE('span', '', '', `${index} ${val}`, outputContainer)
         const button = createE('button', '', `output-${building.site}-${index}`, '->', outputContainer)
@@ -407,20 +407,20 @@ const generateSite = (building) => {
   let sortingButtonList = []
   createE('span', '', '', 'Sorting', sortingHeadContainer)
   siteList.forEach((v, i) => {
-    const sortingItem = createE('div', 'container', '', '', box)
-    sortingList.push(sortingItem)
-    if (i === building.site) createE('span', '', '', 'Current', sortingItem)
+    const sortingContainer = createE('div', 'container', '', '', sortingBox)
+    sortingList.push(sortingContainer)
+    if (i === building.site) createE('span', '', '', 'Current', sortingContainer)
     else {
       if (i === 0) {
-        createE('span', '', '', `Above ${v.site}`, sortingItem)
+        createE('span', '', '', `Above ${v.site}`, sortingContainer)
       } else if (i === siteList.length - 1) {
-        createE('span', '', '', `Below ${v.site}`, sortingItem)
+        createE('span', '', '', `Below ${v.site}`, sortingContainer)
       } else {
         const smallerNum = v.site - 1 === building.site ? v.site : v.site - 1
         const largerNum = v.site + 1 === building.site ? v.site : v.site + 1
-        createE('span', '', '', `${smallerNum} and ${largerNum}`, sortingItem)
+        createE('span', '', '', `${smallerNum} and ${largerNum}`, sortingContainer)
       }
-      const button = createE('button', '', `sorting-${building.site}-${i}`, '->', sortingItem)
+      const button = createE('button', '', `sorting-${building.site}-${i}`, '->', sortingContainer)
       sortingButtonList.push(button)
       button.addEventListener('click', () => rewriteSite(building.site, i))
     }
