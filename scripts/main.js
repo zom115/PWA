@@ -331,59 +331,39 @@ const generateElementToBody = () => {
     resolve()
   })
 }
-const generateSite = (building) => {
-  const createE = (e, c, i = '', t = '', a) => {
-    const element = document.createElement(e)
-    if (c !== '') element.className = c
-    if (i !== '') element.id = i
-    element.textContent = t
-    if (a !== undefined) a.appendChild(element)
-    return element
-  }
-  const setExpandFunction = (expandButton, containerList) => {
-    containerList.forEach(v => v.style.display = 'none')
-    expandButton.addEventListener('click', () => {
-      expandButton.textContent = expandButton.textContent === '+' ? '-' : '+'
-      containerList.forEach(v => {
-        v.style.display = v.style.display === 'none' ? 'flex' : 'none'
-      })
+const createElement = (e, c, i = '', t = '', a) => {
+  const element = document.createElement(e)
+  if (c !== '') element.className = c
+  if (i !== '') element.id = i
+  element.textContent = t
+  if (a !== undefined) a.appendChild(element)
+  return element
+}
+const setExpandFunction = (expandButton, containerList) => {
+  containerList.forEach(v => v.style.display = 'none')
+  expandButton.addEventListener('click', () => {
+    expandButton.textContent = expandButton.textContent === '+' ? '-' : '+'
+    containerList.forEach(v => {
+      v.style.display = v.style.display === 'none' ? 'flex' : 'none'
     })
-  }
-  const box = createE('div', 'box', '', '', document.getElementById`site`)
-  const topContainer = createE('div', 'container', '', '', box)
-  createE('span', '', `site-${building.site}`, `${building.site} ${building.name}`, topContainer)
-  const topEndItem = createE('span', '', '', '', topContainer)
-  createE('span', '', `content-${building.site}`, building.content, topEndItem)
-  createE('span', '', '', ' ', topEndItem)
-  createE(
-    'span', '', `amount-${building.site}`,
-    `${building.amount} of ${building.capacity}`, topEndItem)
-  const secondBox = createE('div', 'container', '', '', box)
-  const detailExpandButton = createE('button', '', `button-${building.site}`, '+', secondBox)
-  const secondEndItem = createE('span', '', '', '', secondBox)
-  createE(
-    'span', '', `output-${building.site}`,
-    `to ${building.output} ${siteList[building.output].name}`, secondEndItem)
-  createE('span', '', '', ' ', secondEndItem)
-  const checkbox = createE('input', '', `checkbox-${building.site}`, '', secondEndItem)
-  checkbox.type = 'checkbox'
-  checkbox.checked = siteList[building.site].timestamp ? true : false
-  checkbox.addEventListener('input', e => {
-    siteList[building.site].timestamp = e.target.checked ? Date.now() : 0
   })
-  const outputBox = createE('div', 'box', `detail-${building.site}`, '', box)
-  const outputHeadContainer = createE('div', 'container', '', '', outputBox)
-  const outputExpandButton = createE('button', '', '', '+', outputHeadContainer)
-  createE('span', '', '', 'Output', outputHeadContainer)
+}
+const generateOutput = (building, box) => {
+  const outputBox = createElement('div', 'box', `detail-${building.site}`, '', box)
+  outputBox.textContent = null
+  const outputHeadContainer = createElement('div', 'container', '', '', outputBox)
+  const outputExpandButton = createElement('button', '', '', '+', outputHeadContainer)
+  createElement('span', '', '', 'Output', outputHeadContainer)
   let outputContainerList = []
   let outputButtonList = []
   siteList.forEach((value, index) => {
     BUILDING_OBJECT[building.name].acceptable.forEach(val => {
       if (val === value.name) {
-        const outputContainer = createE('div', 'container', '', '', outputBox)
+        const outputContainer = createElement('div', 'container', '', '', outputBox)
         outputContainerList.push(outputContainer)
-        createE('span', '', '', `${index} ${val}`, outputContainer)
-        const button = createE('button', '', `output-${building.site}-${index}`, '->', outputContainer)
+        createElement('span', '', '', `${index} ${val}`, outputContainer)
+        const button = createElement(
+          'button', '', `output-${building.site}-${index}`, '->', outputContainer)
         outputButtonList.push(button)
         button.addEventListener('click', () => {
           rewriteOutput(building.site, index)
@@ -395,53 +375,92 @@ const generateSite = (building) => {
     })
   })
   setExpandFunction(outputExpandButton, outputContainerList)
-  const sortingBox = createE('div', 'box', '', '', box)
-  const sortingHeadContainer = createE('div', 'container', '', '', sortingBox)
-  const sortingExpandButton = createE('button', '', '', '+', sortingHeadContainer)
+  return outputBox
+}
+const generateSorting = (building, box) => {
+  const sortingBox = createElement('div', 'box', '', '', box)
+  sortingBox.textContent = null
+  const sortingHeadContainer = createElement('div', 'container', '', '', sortingBox)
+  const sortingExpandButton = createElement('button', '', '', '+', sortingHeadContainer)
   let sortingContainerList = []
   let sortingButtonList = []
-  createE('span', '', '', 'Sorting', sortingHeadContainer)
+  createElement('span', '', '', 'Sorting', sortingHeadContainer)
   siteList.forEach((v, i) => {
-    const sortingContainer = createE('div', 'container', '', '', sortingBox)
+    const sortingContainer = createElement('div', 'container', '', '', sortingBox)
     sortingContainerList.push(sortingContainer)
-    if (i === building.site) createE('span', '', '', 'Current', sortingContainer)
+    if (i === building.site) createElement('span', '', '', 'Current', sortingContainer)
     else {
       if (i === 0) {
-        createE('span', '', '', `Above ${v.site}`, sortingContainer)
+        createElement('span', '', '', `Above ${v.site}`, sortingContainer)
       } else if (i === siteList.length - 1) {
-        createE('span', '', '', `Below ${v.site}`, sortingContainer)
+        createElement('span', '', '', `Below ${v.site}`, sortingContainer)
       } else {
         const smallerNum = v.site - 1 === building.site ? v.site : v.site - 1
         const largerNum = v.site + 1 === building.site ? v.site : v.site + 1
-        createE('span', '', '', `${smallerNum} and ${largerNum}`, sortingContainer)
+        createElement('span', '', '', `${smallerNum} and ${largerNum}`, sortingContainer)
       }
-      const button = createE('button', '', `sorting-${building.site}-${i}`, '->', sortingContainer)
+      const button = createElement(
+        'button', '', `sorting-${building.site}-${i}`, '->', sortingContainer)
       sortingButtonList.push(button)
       button.addEventListener('click', () => rewriteSite(building.site, i))
     }
   })
   setExpandFunction(sortingExpandButton, sortingContainerList)
-  const conversionBox = createE('div', 'box', '', '', box)
+  return sortingBox
+}
+const generateConversion = (building, box) => {
+  const conversionBox = createElement('div', 'box', '', '', box)
   conversionBox.textContent = null
-  const conversionHeadContainer = createE('div', 'container', '', '', conversionBox)
-  const conversionExpandButton = createE('button', '', '', '+', conversionHeadContainer)
-  createE('span', '', '', 'Conversion Information', conversionHeadContainer)
+  const conversionHeadContainer = createElement('div', 'container', '', '', conversionBox)
+  const conversionExpandButton = createElement('button', '', '', '+', conversionHeadContainer)
+  createElement('span', '', '', 'Conversion Information', conversionHeadContainer)
   const conversionContainerList = []
   BUILDING_OBJECT[building.name].conversion.forEach(val => {
-    const conversionContainer = createE('div', 'container', '', '', conversionBox)
+    const conversionContainer = createElement('div', 'container', '', '', conversionBox)
     conversionContainerList.push(conversionContainer)
-    createE(
+    createElement(
       'span', '', '', `1 ${val.from} -> ${val.efficiency} ${val.to}`, conversionContainer)
   })
   setExpandFunction(conversionExpandButton, conversionContainerList)
-  const boxList = [outputBox, sortingBox, conversionBox]
+  return conversionBox
+}
+const generateSite = (building) => {
+  const siteBox = createElement('div', 'box', '', '', document.getElementById`site`)
+  const topContainer = createElement('div', 'container', '', '', siteBox)
+  createElement(
+    'span', '', `site-${building.site}`, `${building.site} ${building.name}`, topContainer)
+  const topEndItem = createElement('span', '', '', '', topContainer)
+  createElement('span', '', `content-${building.site}`, building.content, topEndItem)
+  createElement('span', '', '', ' ', topEndItem)
+  createElement(
+    'span', '', `amount-${building.site}`,
+    `${building.amount} of ${building.capacity}`, topEndItem)
+  const secondBox = createElement('div', 'container', '', '', siteBox)
+  const detailExpandButton = createElement(
+    'button', '', `button-${building.site}`, '+', secondBox)
+  const secondEndItem = createElement('span', '', '', '', secondBox)
+  createElement(
+    'span', '', `output-${building.site}`,
+    `to ${building.output} ${siteList[building.output].name}`, secondEndItem)
+  createElement('span', '', '', ' ', secondEndItem)
+  const checkbox = createElement('input', '', `checkbox-${building.site}`, '', secondEndItem)
+  checkbox.type = 'checkbox'
+  checkbox.checked = siteList[building.site].timestamp ? true : false
+  checkbox.addEventListener('input', e => {
+    siteList[building.site].timestamp = e.target.checked ? Date.now() : 0
+  })
+  const boxList = [
+    generateOutput(building, siteBox),
+    generateSorting(building, siteBox),
+    generateConversion(building, siteBox)
+  ]
   setExpandFunction(detailExpandButton, boxList)
-  const bottom = createE('div', 'container', '', '', box)
-  const progress = createE('progress', '', `progress-${building.site}`, '', bottom)
+  const bottom = createElement('div', 'container', '', '', siteBox)
+  const progress = createElement('progress', '', `progress-${building.site}`, '', bottom)
   progress.max = building.capacity
   progress.value = building.amount
 }
-const generateMarket = (v) => {
+const generateMarket = v => {
   const createE = (e, c, i = '', t = '', a) => {
     const element = document.createElement(e)
     if (c !== '') element.className = c
