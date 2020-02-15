@@ -485,7 +485,7 @@ const generateMarket = v => {
     console.log(building)
     await putStore(building)
     siteList.push(building)
-    siteList.forEach(v => generateSite(v))
+    displayElements()
   })
   createE('progress', '', '', '', box)
 }
