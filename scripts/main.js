@@ -19,6 +19,7 @@ const LOCAL_BUFFER_OBJECT = {}
 STORE_NAME_LIST.forEach(v => LOCAL_BUFFER_OBJECT[v] = [])
 const siteList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[0]]
 const marketList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[1]]
+const statisticsList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[2]]
 const WORD_LIST = ['Storage Tank', 'Generator Engine', 'Rig']
 const MATERIAL_LIST = ['Crude', 'EU']
 const BUILDING_OBJECT = {
@@ -60,6 +61,25 @@ const BUILDING_OBJECT = {
     }
   }
 }
+const SETTING_LIST = [{
+  name: 'Show Site DB On Console',
+  function: () => {getDb(0)}
+}, {
+  name: 'Show Market DB On Console',
+  function: () => {getDb(1)}
+}, {
+  name:  'Show Site On Console',
+  function: () => {console.log(siteList)}
+}, {
+  name: 'Clear',
+  function: () => {}
+}, {
+  name: 'Delete DB',
+  function: () => {deleteDb()}
+}, {
+  name: 'Delete DB(No Remake)',
+  funciton: () => {deleteDb(false)}
+}]
 Object.keys(BUILDING_OBJECT).forEach(v => {
   BUILDING_OBJECT[v].acceptable = []
   Object.keys(BUILDING_OBJECT).forEach(val => {
@@ -277,40 +297,6 @@ const generateElementToBody = () => {
       di.textContent = v
       mainElement.appendChild(div)
     })
-    const BUTTON_LIST = [[
-      'showSiteDb',
-      'Show Site DB On Console',
-      () => {getDb(0)}
-    ], [
-      'showMarketDb',
-      'Show Market DB On Console',
-      () => {getDb(1)}
-    ], [
-      'showSite',
-      'Show Site On Console',
-      () => {console.log(siteList)}
-    ], [
-      'clear',
-      'Clear',
-      () => {}
-    ], [
-      'deleteDb',
-      'Delete DB',
-      () => {deleteDb()}
-    ], [
-      'deleteDev',
-      'Delete DB(No Remake)',
-      () => {deleteDb(false)}
-    ]]
-    BUTTON_LIST.forEach(v => {
-      const p = document.createElement`p`
-      const button = document.createElement`button`
-      p.appendChild(button)
-      button.id = v[0]
-      button.textContent = v[1]
-      mainElement.appendChild(p)
-      button.addEventListener('click', v[2])
-    })
     const p = document.createElement`p`
     p.className = 'container'
     p.textContent = 'Connected Time'
@@ -454,21 +440,13 @@ const generateSite = (building) => {
   progress.value = building.amount
 }
 const generateMarket = v => {
-  const createE = (e, c, i = '', t = '', a) => {
-    const element = document.createElement(e)
-    if (c !== '') element.className = c
-    if (i !== '') element.id = i
-    element.textContent = t
-    if (a !== undefined) a.appendChild(element)
-    return element
-  }
   const marketItem = document.getElementById`market`
-  const box = createE('div', 'box', '', '', marketItem)
-  const container = createE('div', 'container', '', '', box)
-  createE('span', '', '', v.name, container)
-  const span = createE('span', '', '', '', container)
-  createE('span', '', '', `Cost ${v.value} ${v.unit} `, span)
-  const button = createE('button', '', '', 'Install', span)
+  const box = createElement('div', 'box', '', '', marketItem)
+  const container = createElement('div', 'container', '', '', box)
+  createElement('span', '', '', v.name, container)
+  const span = createElement('span', '', '', '', container)
+  createElement('span', '', '', `Cost ${v.value} ${v.unit} `, span)
+  const button = createElement('button', '', '', 'Install', span)
   button.addEventListener('click', async () => {
     const building = buildingGenerator(v.site)
     building.output = building.site = siteList.length
@@ -479,14 +457,22 @@ const generateMarket = v => {
     siteList.push(building)
     displayElements()
   })
-  createE('progress', '', '', '', box)
+  createElement('progress', '', '', '', box)
+}
+const generateSetting = v => {
+  const box = createElement('div', 'box', '', '', document.getElementById`setting`)
+  const container = createElement('div', 'container', '', '', box)
+  const button = createElement('button', '', '', v.name, container)
+  button.addEventListener('click', v.function)
 }
 const displayElements = () => {
   return new Promise(resolve => {
     document.getElementById`site`.textContent = 'Site'
     document.getElementById`market`.textContent = 'Market'
+    document.getElementById`setting`.textContent = 'Setting'
     siteList.forEach(v => generateSite(v))
     marketList.forEach(v => generateMarket(v))
+    SETTING_LIST.forEach(v => generateSetting(v))
     resolve()
   })
 }
