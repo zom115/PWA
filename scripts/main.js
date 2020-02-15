@@ -349,8 +349,9 @@ const setExpandFunction = (expandButton, containerList) => {
   })
 }
 const generateOutput = (building, box) => {
-  const outputBox = createElement('div', 'box', `detail-${building.site}`, '', box)
+  const outputBox = createElement('div', 'box', `output-${building.site}`, '', box)
   outputBox.textContent = null
+  console.log(outputBox)
   const outputHeadContainer = createElement('div', 'container', '', '', outputBox)
   const outputExpandButton = createElement('button', '', '', '+', outputHeadContainer)
   createElement('span', '', '', 'Output', outputHeadContainer)
@@ -378,7 +379,7 @@ const generateOutput = (building, box) => {
   return outputBox
 }
 const generateSorting = (building, box) => {
-  const sortingBox = createElement('div', 'box', '', '', box)
+  const sortingBox = createElement('div', 'box', `sorting-${building.site}`, '', box)
   sortingBox.textContent = null
   const sortingHeadContainer = createElement('div', 'container', '', '', sortingBox)
   const sortingExpandButton = createElement('button', '', '', '+', sortingHeadContainer)
@@ -409,7 +410,7 @@ const generateSorting = (building, box) => {
   return sortingBox
 }
 const generateConversion = (building, box) => {
-  const conversionBox = createElement('div', 'box', '', '', box)
+  const conversionBox = createElement('div', 'box', `conversion-${building.site}`, '', box)
   conversionBox.textContent = null
   const conversionHeadContainer = createElement('div', 'container', '', '', conversionBox)
   const conversionExpandButton = createElement('button', '', '', '+', conversionHeadContainer)
@@ -484,7 +485,7 @@ const generateMarket = v => {
     console.log(building)
     await putStore(building)
     siteList.push(building)
-    generateSite(building)
+    siteList.forEach(v => generateSite(v))
   })
   createE('progress', '', '', '', box)
 }
