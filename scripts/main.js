@@ -396,9 +396,7 @@ const generateSorting = (building, box) => {
       } else if (i === siteList.length - 1) {
         createElement('span', '', '', `Below ${v.site}`, sortingContainer)
       } else {
-        const smallerNum = v.site - 1 === building.site ? v.site : v.site - 1
-        const largerNum = v.site + 1 === building.site ? v.site : v.site + 1
-        createElement('span', '', '', `${smallerNum} and ${largerNum}`, sortingContainer)
+        createElement('span', '', '', `${v.site} and ${v.site + 1}`, sortingContainer)
       }
       const button = createElement(
         'button', '', `sorting-${building.site}-${i}`, '->', sortingContainer)
