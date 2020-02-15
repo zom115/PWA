@@ -269,10 +269,10 @@ const convert = () => {
   })
 }
 const generateElementToBody = () => {
-  console.log('generate elements')
-  const mainElement = document.getElementById`main`
-  mainElement.textContent = null
   return new Promise(resolve => {
+    console.log('generate elements')
+    const mainElement = document.getElementById`main`
+    mainElement.textContent = null
     STORE_NAME_LIST.forEach(v => {
       const div = document.createElement`div`
       div.id = v
@@ -282,27 +282,40 @@ const generateElementToBody = () => {
       di.textContent = v
       mainElement.appendChild(div)
     })
-    const BUTTON_LIST = [{
-      showSiteDb: 'showSiteDbOnConsole'
-    }, {showMarketDb: 'showMarketDbOnConsole'
-    }, {showSite: 'showSiteOnConsole'
-    }, {clear: 'Clear'
-    }, {deleteDb: 'DeleteDb'
-    }, {deleteDev: 'DeleteDb(no remake)'
-    }]
+    const BUTTON_LIST = [[
+      'showSiteDb',
+      'Show Site DB On Console',
+      () => {getDB(0)}
+    ], [
+      'showMarketDb',
+      'Show Market DB On Console',
+      () => {getDb(1)}
+    ], [
+      'showSite',
+      'Show Site On Console',
+      () => {console.log(siteList)}
+    ], [
+      'clear',
+      'Clear',
+      () => {}
+    ], [
+      'deleteDb',
+      'Delete DB',
+      () => {deleteDb()}
+    ], [
+      'deleteDev',
+      'Delete DB(No Remake)',
+      () => {deleteDb(false)}
+    ]]
     BUTTON_LIST.forEach(v => {
       const p = document.createElement`p`
       const button = document.createElement`button`
       p.appendChild(button)
-      button.id = Object.keys(v)[0]
-      button.textContent = Object.values(v)[0]
+      button.id = v[0]
+      button.textContent = v[1]
       mainElement.appendChild(p)
+      button.addEventListener('click', v[2])
     })
-    document.getElementById`showSiteDb`.addEventListener('click', () => getDb(0))
-    document.getElementById`showMarketDb`.addEventListener('click', () => getDb(1))
-    document.getElementById`showSite`.addEventListener('click', () => console.log(siteList))
-    document.getElementById`deleteDb`.addEventListener('click', () => deleteDb())
-    document.getElementById`deleteDev`.addEventListener('click', () => deleteDb(false))
     const p = document.createElement`p`
     p.className = 'container'
     p.textContent = 'Connected Time'
