@@ -285,7 +285,7 @@ const generateElementToBody = () => {
     const BUTTON_LIST = [[
       'showSiteDb',
       'Show Site DB On Console',
-      () => {getDB(0)}
+      () => {getDb(0)}
     ], [
       'showMarketDb',
       'Show Market DB On Console',
