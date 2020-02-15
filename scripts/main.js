@@ -215,7 +215,7 @@ const rewriteOutput = (former, i) => {
   // db update
   putStore(siteList[former])
   // element update
-  document.getElementById(`output-${former}`).textContent = `${i} ${siteList[i].name}`
+  document.getElementById(`output-${former}`).textContent = `to ${i} ${siteList[i].name}`
 }
 const rewriteSite = (former, i) => {
   console.log('rewrite site')
@@ -331,28 +331,34 @@ const generateSite = (building) => {
   const div = createE('div', 'box', '', '', siteItem)
   const top = createE('div', 'container', '', '', div)
   createE('span', '', `site-${building.site}`, `${building.site} ${building.name}`, top)
-  createE('span','',`time-${building.site}`, '', top)
-  const checkbox = createE('input', '', `checkbox-${building.site}`, '', top)
+  // createE('span','',`time-${building.site}`, '', top)
+  const topEnd = createE('span', '', '', '', top)
+  createE('span', '', `content-${building.site}`, building.content, topEnd)
+  createE('span', '', '', ' ', topEnd)
+  createE(
+    'span', '', `amount-${building.site}`,
+    `${building.amount} of ${building.capacity}`, topEnd)
+  const second = createE('div', 'container', '', '', div)
+  const detailButton = createE('button', '', `button-${building.site}`, '+', second)
+  const secondEnd = createE('span', '', '', '', second)
+  // createE(
+  //   'span', '', `output-${building.site}`,
+  //   `to ${building.output} ${siteList[building.output].name}`, second)
+  // const checkbox = createE('input', '', `checkbox-${building.site}`, '', second)
+  createE(
+    'span', '', `output-${building.site}`,
+    `to ${building.output} ${siteList[building.output].name}`, secondEnd)
+  createE('span', '', '', ' ', secondEnd)
+  const checkbox = createE('input', '', `checkbox-${building.site}`, '', secondEnd)
   checkbox.type = 'checkbox'
   checkbox.checked = siteList[building.site].timestamp ? true : false
   checkbox.addEventListener('input', e => {
     siteList[building.site].timestamp = e.target.checked ? Date.now() : 0
   })
-  const middle = createE('div', 'container', '', '', div)
-  const progress = createE('progress', '', `progress-${building.site}`, '', middle)
-  progress.max = building.capacity
-  progress.value = building.amount
-  const bottom = createE('div', 'container', '', '', div)
-  const detailButton = createE('button', '', `button-${building.site}`, '+', bottom)
-  createE('span', '', `content-${building.site}`, building.content, bottom)
-  createE('span', '', `amount-${building.site}`, `${building.amount} of ${building.capacity}`, bottom)
   const outputBox = createE('div', 'box', `detail-${building.site}`, '', div)
   const outputContainer = createE('div', 'container', '', '', outputBox)
   const outputButton = createE('button', '', '', '+', outputContainer)
   createE('span', '', '', 'Output', outputContainer)
-  createE(
-    'span', '', `output-${building.site}`,
-    `${building.output} ${siteList[building.output].name}`, outputContainer)
   let outputList = []
   let outputButtonList = []
   siteList.forEach((value, index) => {
@@ -396,7 +402,6 @@ const generateSite = (building) => {
   siteList.forEach((v, i) => {
     const sortingItem = createE('div', 'container', '', '', div)
     sortingList.push(sortingItem)
-
     if (i === building.site) createE('span', '', '', 'Current', sortingItem)
     else {
       if (i === 0) {
@@ -451,6 +456,10 @@ const generateSite = (building) => {
         val => val.style.display = val.style.display === 'none' ? 'flex' : 'none')
     })
   })
+  const bottom = createE('div', 'container', '', '', div)
+  const progress = createE('progress', '', `progress-${building.site}`, '', bottom)
+  progress.max = building.capacity
+  progress.value = building.amount
 }
 const generateMarket = (v) => {
   const createE = (e, c, i = '', t = '', a) => {
