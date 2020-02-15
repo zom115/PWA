@@ -24,7 +24,7 @@ const WORD_LIST = ['Storage Tank', 'Generator Engine', 'Rig', 'Battery']
 const MATERIAL_LIST = ['Crude', 'EU']
 const BUILDING_OBJECT = {
   [WORD_LIST[0]]: {
-    acceptor: [WORD_LIST[0], WORD_LIST[2]],
+    acceptor: [MATERIAL_LIST[0]],
     capacity: 40,
     conversion: [{
       from: MATERIAL_LIST[0],
@@ -36,7 +36,7 @@ const BUILDING_OBJECT = {
       unit: MATERIAL_LIST[0]
     }
   }, [WORD_LIST[1]]: {
-    acceptor: [WORD_LIST[0], WORD_LIST[2]],
+    acceptor: [MATERIAL_LIST[0]],
     capacity: 20,
     conversion: [{
       from: MATERIAL_LIST[0],
@@ -48,7 +48,7 @@ const BUILDING_OBJECT = {
       unit: MATERIAL_LIST[0]
     }
   }, [WORD_LIST[2]]: {
-    acceptor: [WORD_LIST[1], WORD_LIST[3]],
+    acceptor: [MATERIAL_LIST[1]],
     capacity: 2 ** 3 + 2,
     conversion: [{
       from: MATERIAL_LIST[1],
@@ -60,7 +60,7 @@ const BUILDING_OBJECT = {
       unit: MATERIAL_LIST[1]
     }
   }, [WORD_LIST[3]]: {
-    acceptor: [WORD_LIST[1]],
+    acceptor: [MATERIAL_LIST[1]],
     capacity: 2 ** 6 + 2 ** 4,
     conversion: [{
       from: MATERIAL_LIST[1],
@@ -95,9 +95,11 @@ const SETTING_LIST = [{
 Object.keys(BUILDING_OBJECT).forEach(v => {
   BUILDING_OBJECT[v].acceptable = []
   Object.keys(BUILDING_OBJECT).forEach(val => {
-    if (BUILDING_OBJECT[val].acceptor.some(value => v === value)) {
-      BUILDING_OBJECT[v].acceptable.push(val)
-    }
+    BUILDING_OBJECT[v].acceptor.forEach(valval => {
+      if (BUILDING_OBJECT[val].conversion.some(valu => valval === valu.to)) {
+        BUILDING_OBJECT[v].acceptable.push(val)
+      }
+    })
   })
 })
 const FIRST_BUILDING_LIST = []
