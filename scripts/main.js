@@ -340,6 +340,15 @@ const generateSite = (building) => {
     if (a !== undefined) a.appendChild(element)
     return element
   }
+  const setExpandFunction = (expandButton, containerList) => {
+    containerList.forEach(v => v.style.display = 'none')
+    expandButton.addEventListener('click', () => {
+      expandButton.textContent = expandButton.textContent === '+' ? '-' : '+'
+      containerList.forEach(v => {
+        v.style.display = v.style.display === 'none' ? 'flex' : 'none'
+      })
+    })
+  }
   const box = createE('div', 'box', '', '', document.getElementById`site`)
   const topContainer = createE('div', 'container', '', '', box)
   createE('span', '', `site-${building.site}`, `${building.site} ${building.name}`, topContainer)
@@ -385,30 +394,16 @@ const generateSite = (building) => {
       }
     })
   })
-  /*
-  const sendBox = createE('div', 'box', '', '', div)
-  const sendContainer = createE('div', 'container', '', '', sendBox)
-  createE('span', '', '', 'Send Amount', sendContainer)
-  const sendIndicator = createE('span', '', '', v.amount, sendContainer)
-  const inputElement = createE('input', '', `input-${num}`, '', div)
-  inputElement.type = 'range'
-  inputElement.step = 1
-  inputElement.min = 1
-  inputElement.max = v.amount
-  inputElement.value = v.amount
-  inputElement.addEventListener('input', e => {
-    v.value = sendIndicator.textContent = e.target.value
-  })
-  */
+  setExpandFunction(outputExpandButton, outputContainerList)
   const sortingBox = createE('div', 'box', '', '', box)
   const sortingHeadContainer = createE('div', 'container', '', '', sortingBox)
   const sortingExpandButton = createE('button', '', '', '+', sortingHeadContainer)
-  let sortingList = []
+  let sortingContainerList = []
   let sortingButtonList = []
   createE('span', '', '', 'Sorting', sortingHeadContainer)
   siteList.forEach((v, i) => {
     const sortingContainer = createE('div', 'container', '', '', sortingBox)
-    sortingList.push(sortingContainer)
+    sortingContainerList.push(sortingContainer)
     if (i === building.site) createE('span', '', '', 'Current', sortingContainer)
     else {
       if (i === 0) {
@@ -425,45 +420,22 @@ const generateSite = (building) => {
       button.addEventListener('click', () => rewriteSite(building.site, i))
     }
   })
+  setExpandFunction(sortingExpandButton, sortingContainerList)
   const conversionBox = createE('div', 'box', '', '', box)
+  conversionBox.textContent = null
   const conversionHeadContainer = createE('div', 'container', '', '', conversionBox)
   const conversionExpandButton = createE('button', '', '', '+', conversionHeadContainer)
   createE('span', '', '', 'Conversion Information', conversionHeadContainer)
-  let conversionList = []
+  const conversionContainerList = []
   BUILDING_OBJECT[building.name].conversion.forEach(val => {
     const conversionContainer = createE('div', 'container', '', '', conversionBox)
-    conversionList.push(conversionContainer)
+    conversionContainerList.push(conversionContainer)
     createE(
       'span', '', '', `1 ${val.from} -> ${val.efficiency} ${val.to}`, conversionContainer)
   })
-  const boxList = [
-    outputBox,
-    // sendBox,
-    // inputElement,
-    sortingBox,
-    conversionBox
-  ]
-  boxList.forEach(v => v.style.display = 'none')
-  const buttonList = [outputExpandButton, sortingExpandButton, conversionExpandButton]
-  const constList = [outputContainerList, sortingList, conversionList]
-  constList.forEach(v => v.forEach(val => val.style.display = 'none'))
-  detailExpandButton.addEventListener('click', () => {
-    detailExpandButton.textContent = detailExpandButton.textContent === '+' ? '-' : '+'
-    boxList.forEach(v => v.style.display = v.style.display === 'none' ? 'flex' : 'none')
-    buttonList.forEach((v, i) => {
-      if (v.textContent === '-') {
-        constList[i].forEach(
-          val => val.style.display = val.style.display === 'none' ? 'flex' : 'none')
-      }
-    })
-  })
-  buttonList.forEach((v, i) => {
-    v.addEventListener('click', () => {
-      v.textContent = v.textContent === '+' ? '-' : '+'
-      constList[i].forEach(
-        val => val.style.display = val.style.display === 'none' ? 'flex' : 'none')
-    })
-  })
+  setExpandFunction(conversionExpandButton, conversionContainerList)
+  const boxList = [outputBox, sortingBox, conversionBox]
+  setExpandFunction(detailExpandButton, boxList)
   const bottom = createE('div', 'container', '', '', box)
   const progress = createE('progress', '', `progress-${building.site}`, '', bottom)
   progress.max = building.capacity
