@@ -88,7 +88,6 @@ const openDb = () => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION)
     request.onsuccess = async () => {
-      console.log('open DB success')
       db = request.result
       await setDbFirst().catch( async () => {
         await Promise.all(STORE_NAME_LIST.map(async v => await getDbForBuffer(v)))
@@ -139,10 +138,7 @@ const getDbForBuffer = storeName => {
       if (cursor) {
         LOCAL_BUFFER_OBJECT[storeName].push(cursor.value)
         cursor.continue()
-      } else {
-        console.log(storeName, 'set DB contents for buffer successful')
-        resolve()
-      }
+      } else resolve()
     }
   })
 }
@@ -270,7 +266,6 @@ const convert = () => {
 }
 const generateElementToBody = () => {
   return new Promise(resolve => {
-    console.log('generate elements')
     const mainElement = document.getElementById`main`
     mainElement.textContent = null
     STORE_NAME_LIST.forEach(v => {
@@ -351,7 +346,6 @@ const setExpandFunction = (expandButton, containerList) => {
 const generateOutput = (building, box) => {
   const outputBox = createElement('div', 'box', `output-${building.site}`, '', box)
   outputBox.textContent = null
-  console.log(outputBox)
   const outputHeadContainer = createElement('div', 'container', '', '', outputBox)
   const outputExpandButton = createElement('button', '', '', '+', outputHeadContainer)
   createElement('span', '', '', 'Output', outputHeadContainer)
