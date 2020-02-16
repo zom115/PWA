@@ -24,7 +24,7 @@ const BUILDING_LIST = ['Storage Tank', 'Generator Engine', 'Rig', 'Battery']
 const MATERIAL_LIST = ['Crude Oil', 'EU']
 const BUILDING_OBJECT = {
   [BUILDING_LIST[0]]: {
-    acceptor: [MATERIAL_LIST[0]],
+    // acceptor: [MATERIAL_LIST[0]],
     capacity: 40,
     conversion: [{
       from: {[MATERIAL_LIST[0]]: 1},
@@ -35,7 +35,7 @@ const BUILDING_OBJECT = {
       unit: MATERIAL_LIST[0]
     }
   }, [BUILDING_LIST[1]]: {
-    acceptor: [MATERIAL_LIST[0]],
+    // acceptor: [MATERIAL_LIST[0]],
     capacity: 20,
     conversion: [{
       from: {[MATERIAL_LIST[0]]: 1},
@@ -46,7 +46,7 @@ const BUILDING_OBJECT = {
       unit: MATERIAL_LIST[0]
     }
   }, [BUILDING_LIST[2]]: {
-    acceptor: [MATERIAL_LIST[1]],
+    // acceptor: [MATERIAL_LIST[1]],
     capacity: 2 ** 3 + 2,
     conversion: [{
       from: {[MATERIAL_LIST[1]]: 1},
@@ -57,7 +57,7 @@ const BUILDING_OBJECT = {
       unit: MATERIAL_LIST[1]
     }
   }, [BUILDING_LIST[3]]: {
-    acceptor: [MATERIAL_LIST[1]],
+    // acceptor: [MATERIAL_LIST[1]],
     capacity: 2 ** 6 + 2 ** 4,
     conversion: [{
       from: {[MATERIAL_LIST[1]]: 1},
@@ -108,22 +108,22 @@ const SETTING_LIST = [{
   name: 'Delete DB(No Remake)',
   function: () => {deleteDb(false)}
 }]
-Object.keys(BUILDING_OBJECT).forEach((v, i) => {
-  BUILDING_OBJECT[v].acceptable = []
-  BUILDING_OBJECT[v].acceptor.forEach(va => {
-    Object.keys(BUILDING_OBJECT).forEach((val, ind) => {
-      BUILDING_OBJECT[val].conversion.forEach(valu => {
-        if (Object.keys(valu.to).some(value => {
-          console.log(v, val)
-          console.log(va, i, value, ind)
-          return va === value
-        })) {
-          console.log('a')
-          BUILDING_OBJECT[v].acceptable.push(v)
-        }
-      })
-    })
-  })
+// Object.keys(BUILDING_OBJECT).forEach((v, i) => {
+//   BUILDING_OBJECT[v].acceptable = []
+//   BUILDING_OBJECT[v].acceptor.forEach(va => {
+//     Object.keys(BUILDING_OBJECT).forEach((val, ind) => {
+//       BUILDING_OBJECT[val].conversion.forEach(valu => {
+//         if (Object.keys(valu.to).some(value => {
+//           console.log(v, val)
+//           console.log(va, i, value, ind)
+//           return va === value
+//         })) {
+//           console.log('a')
+//           BUILDING_OBJECT[v].acceptable.push(v)
+//         }
+//       })
+//     })
+//   })
   // Object.keys(BUILDING_OBJECT).forEach(val => {
   //   BUILDING_OBJECT[v].acceptor.forEach(valval => {
   //     console.log(valval)
@@ -131,8 +131,7 @@ Object.keys(BUILDING_OBJECT).forEach((v, i) => {
   //     }
   //   })
   // })
-})
-console.log(BUILDING_OBJECT)
+// })
 let showConversionFlag = false
 const hideConversionToggle = () => {
   showConversionFlag = !showConversionFlag
@@ -382,22 +381,18 @@ const generateOutput = (building, box) => {
   let outputContainerList = []
   let outputButtonList = []
   siteList.forEach((value, index) => {
-    BUILDING_OBJECT[building.name].acceptable.forEach(val => {
-      if (val === value.name) {
-        const outputContainer = createElement('div', 'container', '', '', outputBox)
-        outputContainerList.push(outputContainer)
-        createElement('span', '', '', `${index} ${val}`, outputContainer)
-        const button = createElement(
-          'button', '', `output-${building.site}-${index}`, '->', outputContainer)
-        outputButtonList.push(button)
-        button.addEventListener('click', () => {
-          rewriteOutput(building.site, index)
-          outputButtonList.forEach(v => v.style.display = 'flex')
-          button.style.display = 'none'
-        })
-        if (building.content[0].output === index) button.style.display = 'none'
-      }
+    const outputContainer = createElement('div', 'container', '', '', outputBox)
+    outputContainerList.push(outputContainer)
+    createElement('span', '', '', `${index} ${value.name}`, outputContainer)
+    const button = createElement(
+      'button', '', `output-${building.site}-${index}`, '->', outputContainer)
+    outputButtonList.push(button)
+    button.addEventListener('click', () => {
+      rewriteOutput(building.site, index)
+      outputButtonList.forEach(v => v.style.display = 'flex')
+      button.style.display = 'none'
     })
+    if (building.content[0].output === index) button.style.display = 'none'
   })
   setExpandFunction(outputExpandButton, outputContainerList)
   return outputBox
