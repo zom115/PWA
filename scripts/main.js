@@ -20,10 +20,10 @@ STORE_NAME_LIST.forEach(v => LOCAL_BUFFER_OBJECT[v] = [])
 const siteList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[0]]
 const marketList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[1]]
 const statisticsList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[2]]
-const WORD_LIST = ['Storage Tank', 'Generator Engine', 'Rig', 'Battery']
+const BUILDING_LIST = ['Storage Tank', 'Generator Engine', 'Rig', 'Battery']
 const MATERIAL_LIST = ['Crude', 'EU']
 const BUILDING_OBJECT = {
-  [WORD_LIST[0]]: {
+  [BUILDING_LIST[0]]: {
     acceptor: [MATERIAL_LIST[0]],
     capacity: 40,
     conversion: [{
@@ -35,7 +35,7 @@ const BUILDING_OBJECT = {
       value: 32+8,
       unit: MATERIAL_LIST[0]
     }
-  }, [WORD_LIST[1]]: {
+  }, [BUILDING_LIST[1]]: {
     acceptor: [MATERIAL_LIST[0]],
     capacity: 20,
     conversion: [{
@@ -47,7 +47,7 @@ const BUILDING_OBJECT = {
       value: 64+16,
       unit: MATERIAL_LIST[0]
     }
-  }, [WORD_LIST[2]]: {
+  }, [BUILDING_LIST[2]]: {
     acceptor: [MATERIAL_LIST[1]],
     capacity: 2 ** 3 + 2,
     conversion: [{
@@ -59,7 +59,7 @@ const BUILDING_OBJECT = {
       value: 2 ** 6 + 2 ** 4,
       unit: MATERIAL_LIST[1]
     }
-  }, [WORD_LIST[3]]: {
+  }, [BUILDING_LIST[3]]: {
     acceptor: [MATERIAL_LIST[1]],
     capacity: 2 ** 6 + 2 ** 4,
     conversion: [{
@@ -76,10 +76,10 @@ const BUILDING_OBJECT = {
 const FIRST_BUILDING_LIST = []
 const buildingGenerator = (index) => {
   const object = {}
-  object.name = WORD_LIST[index]
+  object.name = BUILDING_LIST[index]
   object.output = index
   object.amount = 0
-  object.capacity = BUILDING_OBJECT[WORD_LIST[index]].capacity
+  object.capacity = BUILDING_OBJECT[BUILDING_LIST[index]].capacity
   object.content = ''
   object.timestamp = 0
   return object
