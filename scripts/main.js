@@ -261,10 +261,9 @@ const rewriteSite = (former, i) => {
   })
   generateElement()
 }
-const rewriteConvert = targetSite => {
+const convertProcess = targetSite => {
   const out = siteList[targetSite.content[0].output]
   BUILDING_OBJECT[targetSite.name].conversion.forEach(v => {
-    console.log(v, out)
     const time = Math.abs(
       targetSite.site - siteList[targetSite.content[0].output].site) * WEIGHT_TIME
     if (
@@ -282,11 +281,7 @@ const rewriteConvert = targetSite => {
         // db update
         putStore(targetSite, out)
         // element update
-        document.getElementById(`amount-${targetSite.site}`).textContent =
-        `${targetSite.content[0].amount} of ${targetSite.capacity}`
-        document.getElementById(`content-${out.site}`).textContent = out.content[0].name
-        document.getElementById(
-          `amount-${out.site}`).textContent = `${out.content[0].amount} of ${out.capacity}`
+        generateElement()
       }
     } else {
       targetSite.content[0].timestamp = 0
@@ -297,7 +292,7 @@ const rewriteConvert = targetSite => {
 }
 const convert = () => {
   siteList.forEach(v => {
-    if (v.content[0].timestamp !== 0) rewriteConvert(v)
+    if (v.content[0].timestamp !== 0) convertProcess(v)
   })
 }
 const generateElementToBody = () => {
