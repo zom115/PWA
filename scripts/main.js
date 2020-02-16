@@ -77,16 +77,18 @@ const FIRST_BUILDING_LIST = []
 const buildingGenerator = (index) => {
   const object = {}
   object.name = BUILDING_LIST[index]
-  object.output = index
-  object.amount = 0
   object.capacity = BUILDING_OBJECT[BUILDING_LIST[index]].capacity
-  object.content = ''
-  object.timestamp = 0
+  object.content = [{
+    name: '',
+    amount: 0,
+    output: index,
+    timestamp: 0
+  }]
   return object
 }
 for (let i = 0; i < 3; i++) FIRST_BUILDING_LIST[i] = buildingGenerator(i)
-FIRST_BUILDING_LIST[0].amount = 8
-FIRST_BUILDING_LIST[0].content = MATERIAL_LIST[0]
+FIRST_BUILDING_LIST[0].content[0].name = MATERIAL_LIST[0]
+FIRST_BUILDING_LIST[0].content[0].amount = 8
 const WEIGHT_TIME = 1e3
 const SETTING_LIST = [{
   name: 'Hide Conversion Information',
@@ -132,6 +134,8 @@ const openDb = () => {
     const request = indexedDB.open(DB_NAME, DB_VERSION)
     request.onsuccess = async () => {
       db = request.result
+      // deleteDb(false)
+      // return
       await setDbFirst().catch( async () => {
         await Promise.all(STORE_NAME_LIST.map(async v => await getDbForBuffer(v)))
       })
@@ -250,7 +254,7 @@ const getDb = num => {
 // }
 const rewriteOutput = (former, i) => {
   // local list update
-  siteList[former].output = i
+  siteList[former].content[0].output = i
   // db update
   putStore(siteList[former])
   // element update
@@ -260,11 +264,15 @@ const rewriteSite = (former, i) => {
   console.log('rewrite site')
   siteList.splice(i, 0, siteList.splice(former, 1)[0])
   siteList.forEach((v, index) => {
-    if (v.output === former) v.output = i
+    if (v.content[0].output === former) v.content[0].output = i
     else if (former < i) {
-      if (former <= v.output && v.output <= i) v.output -= 1
+      if (former <= v.content[0].output && v.content[0].output <= i) {
+        v.content[0].output -= 1
+      }
     } else {
-      if (i <= v.output && v.output <= former) v.output += 1
+      if (i <= v.content[0].output && v.content[0].output <= former) {
+        v.content[0].output += 1
+      }
     }
     v.site = index
     putStore(v)
@@ -272,31 +280,31 @@ const rewriteSite = (former, i) => {
   displayElements()
 }
 const rewriteConvert = targetSite => {
-  const out = siteList[targetSite.output]
+  const out = siteList[targetSite.content[0].output]
   BUILDING_OBJECT[targetSite.name].conversion.forEach(v => {
     const time = Math.abs(
-      targetSite.site - siteList[targetSite.output].site) * WEIGHT_TIME
+      targetSite.site - siteList[targetSite.content[0].output].site) * WEIGHT_TIME
     if (
-      v.from === targetSite.content && 0 < targetSite.amount &&
-      out.amount + v.efficiency * 1 <= out.capacity && time !== 0
+      v.from === targetSite.content[0].name && 0 < targetSite.content[0].amount &&
+      out.content[0].amount + v.efficiency * 1 <= out.capacity && time !== 0
     ) {
-      if (targetSite.timestamp + time <= Date.now()) {
+      if (targetSite.content[0].timestamp + time <= Date.now()) {
         // local list update
-        targetSite.amount -= 1
-        out.content = v.to
-        out.amount += v.efficiency * 1
-        targetSite.timestamp += time
+        targetSite.content[0].amount -= 1
+        out.content[0].name = v.to
+        out.content[0].amount += v.efficiency * 1
+        targetSite.content[0].timestamp += time
         // db update
         putStore(targetSite, out)
         // element update
         document.getElementById(`amount-${targetSite.site}`).textContent =
-        `${targetSite.amount} of ${targetSite.capacity}`
-        document.getElementById(`content-${out.site}`).textContent = out.content
+        `${targetSite.content[0].amount} of ${targetSite.capacity}`
+        document.getElementById(`content-${out.site}`).textContent = out.content[0].name
         document.getElementById(
-          `amount-${out.site}`).textContent = `${out.amount} of ${out.capacity}`
+          `amount-${out.site}`).textContent = `${out.content[0].amount} of ${out.capacity}`
       }
     } else {
-      targetSite.timestamp = 0
+      targetSite.content[0].timestamp = 0
       document.getElementById(`checkbox-${targetSite.site}`).checked = false
       return
     }
@@ -304,7 +312,7 @@ const rewriteConvert = targetSite => {
 }
 const convert = () => {
   siteList.forEach(v => {
-    if (v.timestamp !== 0) rewriteConvert(v)
+    if (v.content[0].timestamp !== 0) rewriteConvert(v)
   })
 }
 const generateElementToBody = () => {
@@ -374,7 +382,7 @@ const generateOutput = (building, box) => {
           outputButtonList.forEach(v => v.style.display = 'flex')
           button.style.display = 'none'
         })
-        if (building.output === index) button.style.display = 'none'
+        if (building.content[0].output === index) button.style.display = 'none'
       }
     })
   })
@@ -436,24 +444,24 @@ const generateSite = (building) => {
   createElement(
     'span', '', `site-${building.site}`, `${building.site} ${building.name}`, topContainer)
   const topEndItem = createElement('span', '', '', '', topContainer)
-  createElement('span', '', `content-${building.site}`, building.content, topEndItem)
+  createElement('span', '', `content-${building.site}`, building.content[0].name, topEndItem)
   createElement('span', '', '', ' ', topEndItem)
   createElement(
     'span', '', `amount-${building.site}`,
-    `${building.amount} of ${building.capacity}`, topEndItem)
+    `${building.content[0].amount} of ${building.capacity}`, topEndItem)
   const secondBox = createElement('div', 'container', '', '', siteBox)
   const detailExpandButton = createElement(
     'button', '', `button-${building.site}`, '+', secondBox)
   const secondEndItem = createElement('span', '', '', '', secondBox)
   createElement(
     'span', '', `output-${building.site}`,
-    `to ${building.output} ${siteList[building.output].name}`, secondEndItem)
+    `to ${building.content[0].output} ${siteList[building.content[0].output].name}`, secondEndItem)
   createElement('span', '', '', ' ', secondEndItem)
   const checkbox = createElement('input', '', `checkbox-${building.site}`, '', secondEndItem)
   checkbox.type = 'checkbox'
-  checkbox.checked = siteList[building.site].timestamp ? true : false
+  checkbox.checked = siteList[building.site].content[0].timestamp ? true : false
   checkbox.addEventListener('input', e => {
-    siteList[building.site].timestamp = e.target.checked ? Date.now() : 0
+    siteList[building.site].content[0].timestamp = e.target.checked ? Date.now() : 0
   })
   const boxList = [
     generateOutput(building, siteBox),
@@ -464,7 +472,7 @@ const generateSite = (building) => {
   const bottom = createElement('div', 'container', '', '', siteBox)
   const progress = createElement('progress', '', `progress-${building.site}`, '', bottom)
   progress.max = building.capacity
-  progress.value = building.amount
+  progress.value = building.content[0].amount
 }
 const generateMarket = v => {
   const marketItem = document.getElementById`market`
@@ -476,8 +484,8 @@ const generateMarket = v => {
   const button = createElement('button', '', '', 'Install', span)
   button.addEventListener('click', async () => {
     const building = buildingGenerator(v.site)
-    building.output = building.site = siteList.length
-    building.amount = -v.value
+    building.content[0].output = building.site = siteList.length
+    building.content[0].amount = -v.value
     console.log('v',v, 'n', v.site, 'l', siteList.length)
     console.log(building)
     await putStore(building)
@@ -507,7 +515,7 @@ const displayUpdate = () => {
   siteList.forEach(v => {
     const progress = document.getElementById(`progress-${v.site}`)
     progress.max = v.capacity
-    progress.value = v.amount
+    progress.value = v.content[0].amount
   })
   const formatTime = argTime => {
     const mm = ('0' + Math.floor(argTime / 6e4)).slice(-2)
