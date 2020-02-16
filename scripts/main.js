@@ -122,7 +122,7 @@ const openDb = () => {
         await Promise.all(STORE_NAME_LIST.map(async v => await getDbForBuffer(v)))
       })
       await generateElementToBody()
-      await displayElements()
+      await generateElement()
       resolve()
     }
     request.onupgradeneeded = e => {
@@ -259,7 +259,7 @@ const rewriteSite = (former, i) => {
     v.site = index
     putStore(v)
   })
-  displayElements()
+  generateElement()
 }
 const rewriteConvert = targetSite => {
   const out = siteList[targetSite.content[0].output]
@@ -425,12 +425,19 @@ const generateSite = (building) => {
   const topContainer = createElement('div', 'container', '', '', siteBox)
   createElement(
     'span', '', `site-${building.site}`, `${building.site} ${building.name}`, topContainer)
-  const topEndItem = createElement('span', '', '', '', topContainer)
-  createElement('span', '', `content-${building.site}`, building.content[0].name, topEndItem)
-  createElement('span', '', '', ' ', topEndItem)
-  createElement(
-    'span', '', `amount-${building.site}`,
-    `${building.content[0].amount} of ${building.capacity}`, topEndItem)
+  building.content.forEach(v => {
+    const contentContainer = createElement('div', 'container', '', '', siteBox)
+    createElement('span', '', `content-${building.site}`, v.name, contentContainer)
+    createElement(
+      'span', '', `amount-${building.site}`,
+      `${v.amount} of ${building.capacity}`, contentContainer)
+    const progressContainer = createElement('div', 'container', '', '', siteBox)
+    const progress = createElement(
+      'progress', '', `progress-${building.site}`, '', progressContainer)
+    progress.max = building.capacity
+    progress.value = v.amount
+  })
+
   const secondBox = createElement('div', 'container', '', '', siteBox)
   const detailExpandButton = createElement(
     'button', '', `button-${building.site}`, '+', secondBox)
@@ -451,10 +458,6 @@ const generateSite = (building) => {
     generateConversion(building, siteBox)
   ]
   setExpandFunction(detailExpandButton, boxList)
-  const bottom = createElement('div', 'container', '', '', siteBox)
-  const progress = createElement('progress', '', `progress-${building.site}`, '', bottom)
-  progress.max = building.capacity
-  progress.value = building.content[0].amount
 }
 const generateMarket = v => {
   const marketItem = document.getElementById`market`
@@ -472,7 +475,7 @@ const generateMarket = v => {
     console.log(building)
     await putStore(building)
     siteList.push(building)
-    displayElements()
+    generateElement()
   })
   createElement('progress', '', '', '', box)
 }
@@ -482,7 +485,7 @@ const generateSetting = v => {
   const button = createElement('button', '', '', v.name, container)
   button.addEventListener('click', v.function)
 }
-const displayElements = () => {
+const generateElement = () => {
   return new Promise(resolve => {
     document.getElementById`site`.textContent = 'Site'
     document.getElementById`market`.textContent = 'Market'
