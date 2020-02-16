@@ -106,6 +106,7 @@ const SETTING_LIST = [{
   name: 'Delete DB(No Remake)',
   function: () => {deleteDb(false)}
 }]
+let displayFlagObject = {}
 let showConversionFlag = false
 const hideConversionToggle = () => {
   showConversionFlag = !showConversionFlag
@@ -369,8 +370,11 @@ const createElement = (e, c, i = '', t = '', a) => {
   return element
 }
 const setExpandFunction = (expandButton, containerList) => {
-  containerList.forEach(v => v.style.display = 'none')
+  if (displayFlagObject[expandButton.id] === undefined) displayFlagObject[expandButton.id] = false
+  if (displayFlagObject[expandButton.id]) containerList.forEach(v => v.style.display = 'flex')
+  else containerList.forEach(v => v.style.display = 'none')
   expandButton.addEventListener('click', () => {
+    displayFlagObject[expandButton.id] = !displayFlagObject[expandButton.id]
     expandButton.textContent = expandButton.textContent === '+' ? '-' : '+'
     containerList.forEach(v => {
       v.style.display = v.style.display === 'none' ? 'flex' : 'none'
@@ -381,7 +385,8 @@ const generateSorting = (building, box) => {
   const sortingBox = createElement('div', 'box', `sorting-${building.site}`, '', box)
   sortingBox.textContent = null
   const sortingHeadContainer = createElement('div', 'container', '', '', sortingBox)
-  const sortingExpandButton = createElement('button', '', '', '+', sortingHeadContainer)
+  const sortingExpandButton = createElement(
+    'button', '', `sorting-button-${building.site}`, '+', sortingHeadContainer)
   let sortingContainerList = []
   let sortingButtonList = []
   createElement('span', '', '', 'Sorting', sortingHeadContainer)
@@ -402,7 +407,9 @@ const generateSorting = (building, box) => {
       const button = createElement(
         'button', '', `sorting-${building.site}-${i}`, '->', sortingContainer)
       sortingButtonList.push(button)
-      button.addEventListener('click', () => rewriteSite(building.site, i))
+      button.addEventListener('click', () => {
+        rewriteSite(building.site, i)
+      })
     }
   })
   setExpandFunction(sortingExpandButton, sortingContainerList)
@@ -413,7 +420,8 @@ const generateConversion = (building, box) => {
   recipeBox.textContent = null
   if (showConversionFlag) return recipeBox
   const recipeHeadContainer = createElement('div', 'container', '', '', recipeBox)
-  const recipeExpandButton = createElement('button', '', '', '+', recipeHeadContainer)
+  const recipeExpandButton = createElement(
+    'button', '', `recipe-button-${building.site}`, '+', recipeHeadContainer)
   createElement('span', '', '', 'Conversion Information', recipeHeadContainer)
   const recipeContainerList = []
   BUILDING_OBJECT[building.name].recipe.forEach(val => {
@@ -431,7 +439,7 @@ const generateSite = (building) => {
   const topContainer = createElement('div', 'container', '', '', siteBox)
   const topStartItem = createElement('span', '', '', '', topContainer)
   const detailExpandButton = createElement(
-    'button', '', `button-${building.site}`, '+', topStartItem)
+    'button', '', `detail-button-${building.site}`, '+', topStartItem)
   createElement('span', '', '', ' ', topStartItem)
   createElement(
     'span', '', '', `${building.site} ${building.name}`, topStartItem)
@@ -453,7 +461,7 @@ const generateSite = (building) => {
     progress.value = v.amount
     const outputBox = createElement('div', 'box', `output-${building.site}`, '', containerBox)
     const outputTopContainer = createElement('div', 'container', '', '', outputBox)
-    const outputExpandButton = createElement('button', '', '', '+', outputTopContainer)
+    const outputExpandButton = createElement('button', '', `output-button-${building.site}`, '+', outputTopContainer)
     const outputEndItem = createElement('span', '', '', '', outputTopContainer)
     createElement(
       'span', '', `output-${building.site}`,
