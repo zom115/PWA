@@ -25,7 +25,7 @@ const MATERIAL_LIST = ['Crude Oil', 'EU']
 const BUILDING_OBJECT = {
   [BUILDING_LIST[0]]: {
     capacity: 40,
-    conversion: [{
+    recipe: [{
       from: {[MATERIAL_LIST[0]]: 1},
       to: {[MATERIAL_LIST[0]]: 1}
     }],
@@ -35,7 +35,7 @@ const BUILDING_OBJECT = {
     }
   }, [BUILDING_LIST[1]]: {
     capacity: 20,
-    conversion: [{
+    recipe: [{
       from: {[MATERIAL_LIST[0]]: 1},
       to: {[MATERIAL_LIST[1]]: 2}
     }],
@@ -45,7 +45,7 @@ const BUILDING_OBJECT = {
     }
   }, [BUILDING_LIST[2]]: {
     capacity: 2 ** 3 + 2,
-    conversion: [{
+    recipe: [{
       from: {[MATERIAL_LIST[1]]: 1},
       to: {[MATERIAL_LIST[0]]: 1}
     }],
@@ -55,7 +55,7 @@ const BUILDING_OBJECT = {
     }
   }, [BUILDING_LIST[3]]: {
     capacity: 2 ** 6 + 2 ** 4,
-    conversion: [{
+    recipe: [{
       from: {[MATERIAL_LIST[1]]: 1},
       to: {[MATERIAL_LIST[1]]: 1}
     }],
@@ -76,12 +76,13 @@ const buildingGenerator = (index) => {
     output: index,
     timestamp: 0
   }]
+  object.timestamp = 0
   return object
 }
 for (let i = 0; i < 3; i++) FIRST_BUILDING_LIST[i] = buildingGenerator(i)
 FIRST_BUILDING_LIST[0].content[0].name = MATERIAL_LIST[0]
 FIRST_BUILDING_LIST[0].content[0].amount = 8
-const CONVERT_WEIGHT_TIME = 1e3
+const CONVERT_WEIGHT_TIME = 2e3
 const TRANSPORT_WEIGHT_TIME = 1e3
 const SETTING_LIST = [{
   name: 'Hide Conversion Information',
@@ -264,9 +265,9 @@ const rewriteSite = (former, i) => {
 }
 const transportProcess = targetSite => {
   const out = siteList[targetSite.content[0].output]
-  BUILDING_OBJECT[targetSite.name].conversion.forEach(v => {
+  BUILDING_OBJECT[targetSite.name].recipe.forEach(v => {
     const time = Math.abs(
-      targetSite.site - siteList[targetSite.content[0].output].site) * CONVERT_WEIGHT_TIME
+      targetSite.site - siteList[targetSite.content[0].output].site) * TRANSPORT_WEIGHT_TIME
     if (
       0 < targetSite.content[0].amount &&
       out.content[0].amount < out.capacity &&
@@ -286,43 +287,49 @@ const transportProcess = targetSite => {
     } else {
       targetSite.content[0].timestamp = 0
       document.getElementById(`checkbox-${targetSite.site}`).checked = false
-      return
     }
   })
 }
 const convertProcess = targetSite => {
-  const out = siteList[targetSite.content[0].output]
-  BUILDING_OBJECT[targetSite.name].conversion.forEach(v => {
-    const time = Math.abs(
-      targetSite.site - siteList[targetSite.content[0].output].site) * CONVERT_WEIGHT_TIME
-    if (
-      Object.keys(v.from)[0] === targetSite.content[0].name &&
-      0 < targetSite.content[0].amount &&
-      out.content[0].amount + Object.values(v.to)[0] <= out.capacity &&
-      time !== 0
-    ) {
-      if (targetSite.content[0].timestamp + time <= Date.now()) {
-        // local list update
-        targetSite.content[0].amount -= 1
-        out.content[0].name = Object.keys(v.to)[0]
-        out.content[0].amount += Object.values(v.to)[0]
-        targetSite.content[0].timestamp += time
-        // db update
-        putStore(targetSite, out)
-        // element update
-        generateElement()
-      }
-    } else {
-      targetSite.content[0].timestamp = 0
-      document.getElementById(`checkbox-${targetSite.site}`).checked = false
-      return
-    }
+  const reset = () => {
+    targetSite.timestamp = 0
+    // document.getElementById(`checkbox-${targetSite.site}`).checked = false
+  }
+  targetSite.content.forEach(v => {
+    BUILDING_OBJECT[targetSite.name].recipe.forEach(va => {
+      // まずcontentがrecipeにあるか
+      // from some レシピ検索
+      if (Object.keys(va.from).some(val => val === v.name)) {
+        // 材料足りてるか
+        // TODO remake siteList[n].content for Object
+        const nameObject = {}
+        targetSite.content.forEach(valu => nameObject[valu.name] = valu.amount)
+        if (Object.keys(va.from).every(valu => Object.values(valu) <= nameObject[valu])) {
+          // 足りてたら
+          // local list update
+          if (targetSite.timestamp &&
+            targetSite.timestamp + CONVERT_WEIGHT_TIME <= Date.now()
+          ) {
+            va.from.forEach(value => targetSite.content[value].amount -= 1)
+            va.to.forEach(value => {
+              out.content[value].name = Object.keys(value)
+              out.content[value].amount += Object.values(value)
+            })
+            targetSite.timestamp += time
+            // db update
+            putStore(targetSite, out)
+            // element update
+            generateElement()
+          } else reset()
+        } else reset()
+      } else reset()
+    })
   })
 }
 const convert = () => {
   siteList.forEach(v => {
     if (v.content[0].timestamp !== 0) transportProcess(v)
-    // convertProcess(v)
+    convertProcess(v)
   })
 }
 const generateElementToBody = () => {
@@ -428,22 +435,22 @@ const generateSorting = (building, box) => {
   return sortingBox
 }
 const generateConversion = (building, box) => {
-  const conversionBox = createElement('div', 'box', `conversion-${building.site}`, '', box)
-  conversionBox.textContent = null
-  if (showConversionFlag) return conversionBox
-  const conversionHeadContainer = createElement('div', 'container', '', '', conversionBox)
-  const conversionExpandButton = createElement('button', '', '', '+', conversionHeadContainer)
-  createElement('span', '', '', 'Conversion Information', conversionHeadContainer)
-  const conversionContainerList = []
-  BUILDING_OBJECT[building.name].conversion.forEach(val => {
-    const conversionContainer = createElement('div', 'container', '', '', conversionBox)
-    conversionContainerList.push(conversionContainer)
+  const recipeBox = createElement('div', 'box', `recipe-${building.site}`, '', box)
+  recipeBox.textContent = null
+  if (showConversionFlag) return recipeBox
+  const recipeHeadContainer = createElement('div', 'container', '', '', recipeBox)
+  const recipeExpandButton = createElement('button', '', '', '+', recipeHeadContainer)
+  createElement('span', '', '', 'Conversion Information', recipeHeadContainer)
+  const recipeContainerList = []
+  BUILDING_OBJECT[building.name].recipe.forEach(val => {
+    const recipeContainer = createElement('div', 'container', '', '', recipeBox)
+    recipeContainerList.push(recipeContainer)
     createElement(
       'span', '', '',
-      `${Object.entries(val.from)} -> ${Object.entries(val.to)}`, conversionContainer)
+      `${Object.entries(val.from)} -> ${Object.entries(val.to)}`, recipeContainer)
   })
-  setExpandFunction(conversionExpandButton, conversionContainerList)
-  return conversionBox
+  setExpandFunction(recipeExpandButton, recipeContainerList)
+  return recipeBox
 }
 const generateSite = (building) => {
   const siteBox = createElement('div', 'box', '', '', document.getElementById`site`)
