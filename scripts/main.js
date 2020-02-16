@@ -73,7 +73,25 @@ const BUILDING_OBJECT = {
     }
   }
 }
+const FIRST_BUILDING_LIST = []
+const buildingGenerator = (index) => {
+  const object = {}
+  object.name = WORD_LIST[index]
+  object.output = index
+  object.amount = 0
+  object.capacity = BUILDING_OBJECT[WORD_LIST[index]].capacity
+  object.content = ''
+  object.timestamp = 0
+  return object
+}
+for (let i = 0; i < 3; i++) FIRST_BUILDING_LIST[i] = buildingGenerator(i)
+FIRST_BUILDING_LIST[0].amount = 8
+FIRST_BUILDING_LIST[0].content = MATERIAL_LIST[0]
+const WEIGHT_TIME = 1e3
 const SETTING_LIST = [{
+  name: 'Hide Conversion Information',
+  function: () => {hideConversionToggle()}
+}, {
   name: 'Show Site DB On Console',
   function: () => {getDb(0)}
 }, {
@@ -102,21 +120,12 @@ Object.keys(BUILDING_OBJECT).forEach(v => {
     })
   })
 })
-const FIRST_BUILDING_LIST = []
-const buildingGenerator = (index) => {
-  const object = {}
-  object.name = WORD_LIST[index]
-  object.output = index
-  object.amount = 0
-  object.capacity = BUILDING_OBJECT[WORD_LIST[index]].capacity
-  object.content = ''
-  object.timestamp = 0
-  return object
+let boooooool = false
+const hideConversionToggle = () => {
+  boooooool = !boooooool
+  document.getElementById`site`.textContent = 'Site'
+  siteList.forEach(v => generateSite(v))
 }
-for (let i = 0; i < 3; i++) FIRST_BUILDING_LIST[i] = buildingGenerator(i)
-FIRST_BUILDING_LIST[0].amount = 8
-FIRST_BUILDING_LIST[0].content = MATERIAL_LIST[0]
-const WEIGHT_TIME = 1e3
 let db
 const openDb = () => {
   return new Promise((resolve, reject) => {
@@ -407,6 +416,7 @@ const generateSorting = (building, box) => {
 const generateConversion = (building, box) => {
   const conversionBox = createElement('div', 'box', `conversion-${building.site}`, '', box)
   conversionBox.textContent = null
+  if (boooooool) return conversionBox
   const conversionHeadContainer = createElement('div', 'container', '', '', conversionBox)
   const conversionExpandButton = createElement('button', '', '', '+', conversionHeadContainer)
   createElement('span', '', '', 'Conversion Information', conversionHeadContainer)
