@@ -81,7 +81,8 @@ const buildingGenerator = (index) => {
 for (let i = 0; i < 3; i++) FIRST_BUILDING_LIST[i] = buildingGenerator(i)
 FIRST_BUILDING_LIST[0].content[0].name = MATERIAL_LIST[0]
 FIRST_BUILDING_LIST[0].content[0].amount = 8
-const WEIGHT_TIME = 1e3
+const CONVERT_WEIGHT_TIME = 1e3
+const TRANSPORT_WEIGHT_TIME = 1e3
 const SETTING_LIST = [{
   name: 'Hide Conversion Information',
   function: () => {hideConversionToggle()}
@@ -261,11 +262,39 @@ const rewriteSite = (former, i) => {
   })
   generateElement()
 }
+const transportProcess = targetSite => {
+  const out = siteList[targetSite.content[0].output]
+  BUILDING_OBJECT[targetSite.name].conversion.forEach(v => {
+    const time = Math.abs(
+      targetSite.site - siteList[targetSite.content[0].output].site) * CONVERT_WEIGHT_TIME
+    if (
+      0 < targetSite.content[0].amount &&
+      out.content[0].amount < out.capacity &&
+      time !== 0
+    ) {
+      if (targetSite.content[0].timestamp + time <= Date.now()) {
+        // local list update
+        targetSite.content[0].amount -= 1
+        out.content[0].name = targetSite.content[0].name
+        out.content[0].amount += 1
+        targetSite.content[0].timestamp += time
+        // db update
+        putStore(targetSite, out)
+        // element update
+        generateElement()
+      }
+    } else {
+      targetSite.content[0].timestamp = 0
+      document.getElementById(`checkbox-${targetSite.site}`).checked = false
+      return
+    }
+  })
+}
 const convertProcess = targetSite => {
   const out = siteList[targetSite.content[0].output]
   BUILDING_OBJECT[targetSite.name].conversion.forEach(v => {
     const time = Math.abs(
-      targetSite.site - siteList[targetSite.content[0].output].site) * WEIGHT_TIME
+      targetSite.site - siteList[targetSite.content[0].output].site) * CONVERT_WEIGHT_TIME
     if (
       Object.keys(v.from)[0] === targetSite.content[0].name &&
       0 < targetSite.content[0].amount &&
@@ -292,7 +321,8 @@ const convertProcess = targetSite => {
 }
 const convert = () => {
   siteList.forEach(v => {
-    if (v.content[0].timestamp !== 0) convertProcess(v)
+    if (v.content[0].timestamp !== 0) transportProcess(v)
+    // convertProcess(v)
   })
 }
 const generateElementToBody = () => {
@@ -492,11 +522,6 @@ const generateElement = () => {
   })
 }
 const displayUpdate = () => {
-  siteList.forEach(v => {
-    const progress = document.getElementById(`progress-${v.site}`)
-    progress.max = v.capacity
-    progress.value = v.content[0].amount
-  })
   const formatTime = argTime => {
     const mm = ('0' + Math.floor(argTime / 6e4)).slice(-2)
     const ss = ('0' + Math.floor(argTime % 6e4 / 1e3)).slice(-2)
