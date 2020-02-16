@@ -27,9 +27,8 @@ const BUILDING_OBJECT = {
     acceptor: [MATERIAL_LIST[0]],
     capacity: 40,
     conversion: [{
-      from: [MATERIAL_LIST[0]],
-      to: [MATERIAL_LIST[0]],
-      efficiency: 1
+      from: {[MATERIAL_LIST[0]]: 1},
+      to: {[MATERIAL_LIST[0]]: 1}
     }],
     price: {
       value: 32+8,
@@ -39,9 +38,8 @@ const BUILDING_OBJECT = {
     acceptor: [MATERIAL_LIST[0]],
     capacity: 20,
     conversion: [{
-      from: [MATERIAL_LIST[0]],
-      to: [MATERIAL_LIST[1]],
-      efficiency: 2
+      from: {[MATERIAL_LIST[0]]: 1},
+      to: {[MATERIAL_LIST[1]]: 2}
     }],
     price: {
       value: 64+16,
@@ -51,9 +49,8 @@ const BUILDING_OBJECT = {
     acceptor: [MATERIAL_LIST[1]],
     capacity: 2 ** 3 + 2,
     conversion: [{
-      from: [MATERIAL_LIST[1]],
-      to: [MATERIAL_LIST[0]],
-      efficiency: 1
+      from: {[MATERIAL_LIST[1]]: 1},
+      to: {[MATERIAL_LIST[0]]: 1}
     }],
     price: {
       value: 2 ** 6 + 2 ** 4,
@@ -63,9 +60,8 @@ const BUILDING_OBJECT = {
     acceptor: [MATERIAL_LIST[1]],
     capacity: 2 ** 6 + 2 ** 4,
     conversion: [{
-      from: [MATERIAL_LIST[1]],
-      to: [MATERIAL_LIST[1]],
-      efficiency: 1
+      from: {[MATERIAL_LIST[1]]: 1},
+      to: {[MATERIAL_LIST[1]]: 1}
     }],
     price: {
       value: 2 ** 6 + 2 ** 4,
@@ -112,16 +108,31 @@ const SETTING_LIST = [{
   name: 'Delete DB(No Remake)',
   function: () => {deleteDb(false)}
 }]
-Object.keys(BUILDING_OBJECT).forEach(v => {
+Object.keys(BUILDING_OBJECT).forEach((v, i) => {
   BUILDING_OBJECT[v].acceptable = []
-  Object.keys(BUILDING_OBJECT).forEach(val => {
-    BUILDING_OBJECT[v].acceptor.forEach(valval => {
-      if (BUILDING_OBJECT[val].conversion.some(valu => valval === valu.to[0])) {
-        BUILDING_OBJECT[v].acceptable.push(val)
-      }
+  BUILDING_OBJECT[v].acceptor.forEach(va => {
+    Object.keys(BUILDING_OBJECT).forEach((val, ind) => {
+      BUILDING_OBJECT[val].conversion.forEach(valu => {
+        if (Object.keys(valu.to).some(value => {
+          console.log(v, val)
+          console.log(va, i, value, ind)
+          return va === value
+        })) {
+          console.log('a')
+          BUILDING_OBJECT[v].acceptable.push(v)
+        }
+      })
     })
   })
+  // Object.keys(BUILDING_OBJECT).forEach(val => {
+  //   BUILDING_OBJECT[v].acceptor.forEach(valval => {
+  //     console.log(valval)
+  //     if (BUILDING_OBJECT[v].conversion.some(valu => valval === Object.keys(valu.to)[0])) {
+  //     }
+  //   })
+  // })
 })
+console.log(BUILDING_OBJECT)
 let showConversionFlag = false
 const hideConversionToggle = () => {
   showConversionFlag = !showConversionFlag
@@ -285,14 +296,16 @@ const rewriteConvert = targetSite => {
     const time = Math.abs(
       targetSite.site - siteList[targetSite.content[0].output].site) * WEIGHT_TIME
     if (
-      v.from[0] === targetSite.content[0].name && 0 < targetSite.content[0].amount &&
-      out.content[0].amount + v.efficiency * 1 <= out.capacity && time !== 0
+      Object.keys(v.from)[0] === targetSite.content[0].name &&
+      0 < targetSite.content[0].amount &&
+      out.content[0].amount + Object.values(v.to)[0] <= out.capacity &&
+      time !== 0
     ) {
       if (targetSite.content[0].timestamp + time <= Date.now()) {
         // local list update
         targetSite.content[0].amount -= 1
-        out.content[0].name = v.to[0]
-        out.content[0].amount += v.efficiency * 1
+        out.content[0].name = Object.keys(v.to)[0]
+        out.content[0].amount += Object.values(v.to)[0]
         targetSite.content[0].timestamp += time
         // db update
         putStore(targetSite, out)
@@ -433,7 +446,8 @@ const generateConversion = (building, box) => {
     const conversionContainer = createElement('div', 'container', '', '', conversionBox)
     conversionContainerList.push(conversionContainer)
     createElement(
-      'span', '', '', `1 ${val.from[0]} -> ${val.efficiency} ${val.to[0]}`, conversionContainer)
+      'span', '', '',
+      `${Object.entries(val.from)} -> ${Object.entries(val.to)}`, conversionContainer)
   })
   setExpandFunction(conversionExpandButton, conversionContainerList)
   return conversionBox
