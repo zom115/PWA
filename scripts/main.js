@@ -370,9 +370,18 @@ const createElement = (e, c, i = '', t = '', a) => {
   return element
 }
 const setExpandFunction = (expandButton, containerList) => {
-  if (displayFlagObject[expandButton.id] === undefined) displayFlagObject[expandButton.id] = false
-  if (displayFlagObject[expandButton.id]) containerList.forEach(v => v.style.display = 'flex')
-  else containerList.forEach(v => v.style.display = 'none')
+  if (displayFlagObject[expandButton.id] === undefined) {
+    displayFlagObject[expandButton.id] = false
+    expandButton.textContent = '+'
+  }
+  if (displayFlagObject[expandButton.id]) {
+    containerList.forEach(v => v.style.display = 'flex')
+    expandButton.textContent = '-'
+  }
+  else {
+    containerList.forEach(v => v.style.display = 'none')
+    expandButton.textContent = '+'
+  }
   expandButton.addEventListener('click', () => {
     displayFlagObject[expandButton.id] = !displayFlagObject[expandButton.id]
     expandButton.textContent = expandButton.textContent === '+' ? '-' : '+'
@@ -386,7 +395,7 @@ const generateSorting = (building, box) => {
   sortingBox.textContent = null
   const sortingHeadContainer = createElement('div', 'container', '', '', sortingBox)
   const sortingExpandButton = createElement(
-    'button', '', `sorting-button-${building.site}`, '+', sortingHeadContainer)
+    'button', '', `sorting-button-${building.site}`, '', sortingHeadContainer)
   let sortingContainerList = []
   let sortingButtonList = []
   createElement('span', '', '', 'Sorting', sortingHeadContainer)
@@ -421,7 +430,7 @@ const generateConversion = (building, box) => {
   if (showConversionFlag) return recipeBox
   const recipeHeadContainer = createElement('div', 'container', '', '', recipeBox)
   const recipeExpandButton = createElement(
-    'button', '', `recipe-button-${building.site}`, '+', recipeHeadContainer)
+    'button', '', `recipe-button-${building.site}`, '', recipeHeadContainer)
   createElement('span', '', '', 'Conversion Information', recipeHeadContainer)
   const recipeContainerList = []
   BUILDING_OBJECT[building.name].recipe.forEach(val => {
@@ -439,7 +448,7 @@ const generateSite = (building) => {
   const topContainer = createElement('div', 'container', '', '', siteBox)
   const topStartItem = createElement('span', '', '', '', topContainer)
   const detailExpandButton = createElement(
-    'button', '', `detail-button-${building.site}`, '+', topStartItem)
+    'button', '', `detail-button-${building.site}`, '', topStartItem)
   createElement('span', '', '', ' ', topStartItem)
   createElement(
     'span', '', '', `${building.site} ${building.name}`, topStartItem)
@@ -457,12 +466,13 @@ const generateSite = (building) => {
       'progress', '', `progress-${building.site}`, '', progressContainer)
     progress.max = building.capacity
     progress.value = v.amount
-    const outputBox = createElement('div', 'box', `output-${building.site}`, '', containerBox)
+    const outputBox = createElement('div', 'box', '', '', containerBox)
     const outputTopContainer = createElement('div', 'container', '', '', outputBox)
-    const outputExpandButton = createElement('button', '', `output-button-${building.site}`, '+', outputTopContainer)
+    const outputExpandButton = createElement(
+      'button', '', `output-button-${building.site}`, '', outputTopContainer)
     const outputEndItem = createElement('span', '', '', '', outputTopContainer)
     createElement(
-      'span', '', `output-${building.site}`,
+      'span', '', '',
       `to ${v.output} ${siteList[v.output].name}`, outputEndItem)
     createElement('span', '', '', ' ', outputEndItem)
     const checkbox = createElement(
@@ -477,7 +487,7 @@ const generateSite = (building) => {
       outputContainerList.push(outputContainer)
       createElement('span', '', '', `${index} ${value.name}`, outputContainer)
       const button = createElement(
-        'button', '', `output-${building.site}-${index}`, '->', outputContainer)
+        'button', '', '', '->', outputContainer)
       outputButtonList.push(button)
       button.addEventListener('click', () => {
         rewriteOutput(building.site, index)
