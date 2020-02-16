@@ -120,9 +120,9 @@ Object.keys(BUILDING_OBJECT).forEach(v => {
     })
   })
 })
-let boooooool = false
+let showConversionFlag = false
 const hideConversionToggle = () => {
-  boooooool = !boooooool
+  showConversionFlag = !showConversionFlag
   document.getElementById`site`.textContent = 'Site'
   siteList.forEach(v => generateSite(v))
 }
@@ -416,7 +416,7 @@ const generateSorting = (building, box) => {
 const generateConversion = (building, box) => {
   const conversionBox = createElement('div', 'box', `conversion-${building.site}`, '', box)
   conversionBox.textContent = null
-  if (boooooool) return conversionBox
+  if (showConversionFlag) return conversionBox
   const conversionHeadContainer = createElement('div', 'container', '', '', conversionBox)
   const conversionExpandButton = createElement('button', '', '', '+', conversionHeadContainer)
   createElement('span', '', '', 'Conversion Information', conversionHeadContainer)
