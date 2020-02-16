@@ -21,7 +21,7 @@ const siteList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[0]]
 const marketList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[1]]
 const statisticsList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[2]]
 const BUILDING_LIST = ['Storage Tank', 'Generator Engine', 'Rig', 'Battery']
-const MATERIAL_LIST = ['Crude', 'EU']
+const MATERIAL_LIST = ['Crude Oil', 'EU']
 const BUILDING_OBJECT = {
   [BUILDING_LIST[0]]: {
     acceptor: [MATERIAL_LIST[0]],
