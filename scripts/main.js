@@ -242,7 +242,7 @@ const rewriteOutput = (former, i) => {
   // db update
   putStore(siteList[former])
   // element update
-  document.getElementById(`output-${former}`).textContent = `to ${i} ${siteList[i].name}`
+  generateElement()
 }
 const rewriteSite = (former, i) => {
   console.log('rewrite site')
@@ -377,31 +377,6 @@ const setExpandFunction = (expandButton, containerList) => {
     })
   })
 }
-const generateOutput = (building, box) => {
-  const outputBox = createElement('div', 'box', `output-${building.site}`, '', box)
-  outputBox.textContent = null
-  const outputHeadContainer = createElement('div', 'container', '', '', outputBox)
-  const outputExpandButton = createElement('button', '', '', '+', outputHeadContainer)
-  createElement('span', '', '', 'Output', outputHeadContainer)
-  let outputContainerList = []
-  let outputButtonList = []
-  siteList.forEach((value, index) => {
-    const outputContainer = createElement('div', 'container', '', '', outputBox)
-    outputContainerList.push(outputContainer)
-    createElement('span', '', '', `${index} ${value.name}`, outputContainer)
-    const button = createElement(
-      'button', '', `output-${building.site}-${index}`, '->', outputContainer)
-    outputButtonList.push(button)
-    button.addEventListener('click', () => {
-      rewriteOutput(building.site, index)
-      outputButtonList.forEach(v => v.style.display = 'flex')
-      button.style.display = 'none'
-    })
-    if (building.content[0].output === index) button.style.display = 'none'
-  })
-  setExpandFunction(outputExpandButton, outputContainerList)
-  return outputBox
-}
 const generateSorting = (building, box) => {
   const sortingBox = createElement('div', 'box', `sorting-${building.site}`, '', box)
   sortingBox.textContent = null
@@ -420,7 +395,6 @@ const generateSorting = (building, box) => {
       } else if (i === siteList.length - 1) {
         createElement('span', '', '', `Below ${v.site}`, sortingContainer)
       } else {
-        // const numList = []
         createElement(
           'span', '', '', `${building.site < v.site ? v.site : v.site - 1
           } and ${building.site < v.site ? v.site + 1: v.site}`, sortingContainer)
@@ -455,37 +429,62 @@ const generateConversion = (building, box) => {
 const generateSite = (building) => {
   const siteBox = createElement('div', 'box', '', '', document.getElementById`site`)
   const topContainer = createElement('div', 'container', '', '', siteBox)
+  const topStartItem = createElement('span', '', '', '', topContainer)
+  const detailExpandButton = createElement(
+    'button', '', `button-${building.site}`, '+', topStartItem)
+  createElement('span', '', '', ' ', topStartItem)
   createElement(
-    'span', '', `site-${building.site}`, `${building.site} ${building.name}`, topContainer)
+    'span', '', '', `${building.site} ${building.name}`, topStartItem)
+  createElement(
+    'span', '', '', `${building.content.reduce((acc, cur) => {
+      return acc + cur.amount
+    }, 0)} of ${building.capacity}`, topContainer)
+  const containerBox = createElement('div', 'box', '', '', siteBox)
   building.content.forEach(v => {
-    const contentContainer = createElement('div', 'container', '', '', siteBox)
+    const contentContainer = createElement('div', 'container', '', '', containerBox)
     createElement('span', '', `content-${building.site}`, v.name, contentContainer)
     createElement(
       'span', '', `amount-${building.site}`,
       `${v.amount} of ${building.capacity}`, contentContainer)
-    const progressContainer = createElement('div', 'container', '', '', siteBox)
+    const progressContainer = createElement('div', 'container', '', '', containerBox)
     const progress = createElement(
       'progress', '', `progress-${building.site}`, '', progressContainer)
     progress.max = building.capacity
     progress.value = v.amount
+    const outputBox = createElement('div', 'box', `output-${building.site}`, '', containerBox)
+    const outputTopContainer = createElement('div', 'container', '', '', outputBox)
+    const outputExpandButton = createElement('button', '', '', '+', outputTopContainer)
+    const outputEndItem = createElement('span', '', '', '', outputTopContainer)
+    createElement(
+      'span', '', `output-${building.site}`,
+      `to ${v.output} ${siteList[v.output].name}`, outputEndItem)
+    createElement('span', '', '', ' ', outputEndItem)
+    const checkbox = createElement(
+      'input', '', `checkbox-${building.site}`, '', outputEndItem)
+    checkbox.type = 'checkbox'
+    checkbox.checked = v.timestamp ? true : false
+    checkbox.addEventListener('input', e => v.timestamp = e.target.checked ? Date.now() : 0)
+    let outputContainerList = []
+    let outputButtonList = []
+    siteList.forEach((value, index) => {
+      const outputContainer = createElement('div', 'container', '', '', outputBox)
+      outputContainerList.push(outputContainer)
+      createElement('span', '', '', `${index} ${value.name}`, outputContainer)
+      const button = createElement(
+        'button', '', `output-${building.site}-${index}`, '->', outputContainer)
+      outputButtonList.push(button)
+      button.addEventListener('click', () => {
+        rewriteOutput(building.site, index)
+        outputButtonList.forEach(v => v.style.display = 'flex')
+        button.style.display = 'none'
+      })
+      if (building.content[0].output === index) button.style.display = 'none'
+    })
+    setExpandFunction(outputExpandButton, outputContainerList)
   })
 
-  const secondBox = createElement('div', 'container', '', '', siteBox)
-  const detailExpandButton = createElement(
-    'button', '', `button-${building.site}`, '+', secondBox)
-  const secondEndItem = createElement('span', '', '', '', secondBox)
-  createElement(
-    'span', '', `output-${building.site}`,
-    `to ${building.content[0].output} ${siteList[building.content[0].output].name}`, secondEndItem)
-  createElement('span', '', '', ' ', secondEndItem)
-  const checkbox = createElement('input', '', `checkbox-${building.site}`, '', secondEndItem)
-  checkbox.type = 'checkbox'
-  checkbox.checked = siteList[building.site].content[0].timestamp ? true : false
-  checkbox.addEventListener('input', e => {
-    siteList[building.site].content[0].timestamp = e.target.checked ? Date.now() : 0
-  })
   const boxList = [
-    generateOutput(building, siteBox),
+    containerBox,
     generateSorting(building, siteBox),
     generateConversion(building, siteBox)
   ]
