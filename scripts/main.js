@@ -27,8 +27,8 @@ const BUILDING_OBJECT = {
     acceptor: [MATERIAL_LIST[0]],
     capacity: 40,
     conversion: [{
-      from: MATERIAL_LIST[0],
-      to: MATERIAL_LIST[0],
+      from: [MATERIAL_LIST[0]],
+      to: [MATERIAL_LIST[0]],
       efficiency: 1
     }],
     price: {
@@ -39,8 +39,8 @@ const BUILDING_OBJECT = {
     acceptor: [MATERIAL_LIST[0]],
     capacity: 20,
     conversion: [{
-      from: MATERIAL_LIST[0],
-      to: MATERIAL_LIST[1],
+      from: [MATERIAL_LIST[0]],
+      to: [MATERIAL_LIST[1]],
       efficiency: 2
     }],
     price: {
@@ -51,8 +51,8 @@ const BUILDING_OBJECT = {
     acceptor: [MATERIAL_LIST[1]],
     capacity: 2 ** 3 + 2,
     conversion: [{
-      from: MATERIAL_LIST[1],
-      to: MATERIAL_LIST[0],
+      from: [MATERIAL_LIST[1]],
+      to: [MATERIAL_LIST[0]],
       efficiency: 1
     }],
     price: {
@@ -63,8 +63,8 @@ const BUILDING_OBJECT = {
     acceptor: [MATERIAL_LIST[1]],
     capacity: 2 ** 6 + 2 ** 4,
     conversion: [{
-      from: MATERIAL_LIST[1],
-      to: MATERIAL_LIST[1],
+      from: [MATERIAL_LIST[1]],
+      to: [MATERIAL_LIST[1]],
       efficiency: 1
     }],
     price: {
@@ -116,7 +116,7 @@ Object.keys(BUILDING_OBJECT).forEach(v => {
   BUILDING_OBJECT[v].acceptable = []
   Object.keys(BUILDING_OBJECT).forEach(val => {
     BUILDING_OBJECT[v].acceptor.forEach(valval => {
-      if (BUILDING_OBJECT[val].conversion.some(valu => valval === valu.to)) {
+      if (BUILDING_OBJECT[val].conversion.some(valu => valval === valu.to[0])) {
         BUILDING_OBJECT[v].acceptable.push(val)
       }
     })
@@ -285,13 +285,13 @@ const rewriteConvert = targetSite => {
     const time = Math.abs(
       targetSite.site - siteList[targetSite.content[0].output].site) * WEIGHT_TIME
     if (
-      v.from === targetSite.content[0].name && 0 < targetSite.content[0].amount &&
+      v.from[0] === targetSite.content[0].name && 0 < targetSite.content[0].amount &&
       out.content[0].amount + v.efficiency * 1 <= out.capacity && time !== 0
     ) {
       if (targetSite.content[0].timestamp + time <= Date.now()) {
         // local list update
         targetSite.content[0].amount -= 1
-        out.content[0].name = v.to
+        out.content[0].name = v.to[0]
         out.content[0].amount += v.efficiency * 1
         targetSite.content[0].timestamp += time
         // db update
@@ -433,7 +433,7 @@ const generateConversion = (building, box) => {
     const conversionContainer = createElement('div', 'container', '', '', conversionBox)
     conversionContainerList.push(conversionContainer)
     createElement(
-      'span', '', '', `1 ${val.from} -> ${val.efficiency} ${val.to}`, conversionContainer)
+      'span', '', '', `1 ${val.from[0]} -> ${val.efficiency} ${val.to[0]}`, conversionContainer)
   })
   setExpandFunction(conversionExpandButton, conversionContainerList)
   return conversionBox
