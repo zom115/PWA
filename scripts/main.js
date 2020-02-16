@@ -24,7 +24,6 @@ const BUILDING_LIST = ['Storage Tank', 'Generator Engine', 'Rig', 'Battery']
 const MATERIAL_LIST = ['Crude Oil', 'EU']
 const BUILDING_OBJECT = {
   [BUILDING_LIST[0]]: {
-    // acceptor: [MATERIAL_LIST[0]],
     capacity: 40,
     conversion: [{
       from: {[MATERIAL_LIST[0]]: 1},
@@ -35,7 +34,6 @@ const BUILDING_OBJECT = {
       unit: MATERIAL_LIST[0]
     }
   }, [BUILDING_LIST[1]]: {
-    // acceptor: [MATERIAL_LIST[0]],
     capacity: 20,
     conversion: [{
       from: {[MATERIAL_LIST[0]]: 1},
@@ -46,7 +44,6 @@ const BUILDING_OBJECT = {
       unit: MATERIAL_LIST[0]
     }
   }, [BUILDING_LIST[2]]: {
-    // acceptor: [MATERIAL_LIST[1]],
     capacity: 2 ** 3 + 2,
     conversion: [{
       from: {[MATERIAL_LIST[1]]: 1},
@@ -57,7 +54,6 @@ const BUILDING_OBJECT = {
       unit: MATERIAL_LIST[1]
     }
   }, [BUILDING_LIST[3]]: {
-    // acceptor: [MATERIAL_LIST[1]],
     capacity: 2 ** 6 + 2 ** 4,
     conversion: [{
       from: {[MATERIAL_LIST[1]]: 1},
@@ -108,30 +104,6 @@ const SETTING_LIST = [{
   name: 'Delete DB(No Remake)',
   function: () => {deleteDb(false)}
 }]
-// Object.keys(BUILDING_OBJECT).forEach((v, i) => {
-//   BUILDING_OBJECT[v].acceptable = []
-//   BUILDING_OBJECT[v].acceptor.forEach(va => {
-//     Object.keys(BUILDING_OBJECT).forEach((val, ind) => {
-//       BUILDING_OBJECT[val].conversion.forEach(valu => {
-//         if (Object.keys(valu.to).some(value => {
-//           console.log(v, val)
-//           console.log(va, i, value, ind)
-//           return va === value
-//         })) {
-//           console.log('a')
-//           BUILDING_OBJECT[v].acceptable.push(v)
-//         }
-//       })
-//     })
-//   })
-  // Object.keys(BUILDING_OBJECT).forEach(val => {
-  //   BUILDING_OBJECT[v].acceptor.forEach(valval => {
-  //     console.log(valval)
-  //     if (BUILDING_OBJECT[v].conversion.some(valu => valval === Object.keys(valu.to)[0])) {
-  //     }
-  //   })
-  // })
-// })
 let showConversionFlag = false
 const hideConversionToggle = () => {
   showConversionFlag = !showConversionFlag
@@ -292,6 +264,7 @@ const rewriteSite = (former, i) => {
 const rewriteConvert = targetSite => {
   const out = siteList[targetSite.content[0].output]
   BUILDING_OBJECT[targetSite.name].conversion.forEach(v => {
+    console.log(v, out)
     const time = Math.abs(
       targetSite.site - siteList[targetSite.content[0].output].site) * WEIGHT_TIME
     if (
