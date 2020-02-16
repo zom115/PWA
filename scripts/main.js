@@ -450,10 +450,8 @@ const generateSite = (building) => {
   const containerBox = createElement('div', 'box', '', '', siteBox)
   building.content.forEach(v => {
     const contentContainer = createElement('div', 'container', '', '', containerBox)
-    createElement('span', '', `content-${building.site}`, v.name, contentContainer)
-    createElement(
-      'span', '', `amount-${building.site}`,
-      `${v.amount} of ${building.capacity}`, contentContainer)
+    createElement('span', '', '', v.name, contentContainer)
+    createElement('span', '', '', v.amount, contentContainer)
     const progressContainer = createElement('div', 'container', '', '', containerBox)
     const progress = createElement(
       'progress', '', `progress-${building.site}`, '', progressContainer)
