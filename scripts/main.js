@@ -237,11 +237,11 @@ const getDb = num => {
 //     console.error('clearObjectStore:', e.target.errorCode)
 //   }
 // }
-const rewriteOutput = (former, i) => {
+const rewriteOutput = (formerIndex, formerContent, index) => {
   // local list update
-  siteList[former].content[0].output = i
+  formerContent.output = index
   // db update
-  putStore(siteList[former])
+  putStore(siteList[formerIndex])
   // element update
   generateElement()
 }
@@ -249,47 +249,48 @@ const rewriteSite = (former, i) => {
   console.log('rewrite site')
   siteList.splice(i, 0, siteList.splice(former, 1)[0])
   siteList.forEach((v, index) => {
-    if (v.content[0].output === former) v.content[0].output = i
-    else if (former < i) {
-      if (former <= v.content[0].output && v.content[0].output <= i) {
-        v.content[0].output -= 1
+    v.content.forEach(value => {
+      if (value.output === former) value.output = i
+      else if (former < i) {
+        if (former <= value.output && value.output <= i) {
+          value.output -= 1
+        }
+      } else {
+        if (i <= value.output && value.output <= former) {
+          value.output += 1
+        }
       }
-    } else {
-      if (i <= v.content[0].output && v.content[0].output <= former) {
-        v.content[0].output += 1
-      }
-    }
-    v.site = index
+      v.site = index
+    })
     putStore(v)
   })
   generateElement()
 }
-const transportProcess = targetSite => {
-  const out = siteList[targetSite.content[0].output]
-  BUILDING_OBJECT[targetSite.name].recipe.forEach(v => {
-    const time = Math.abs(
-      targetSite.site - siteList[targetSite.content[0].output].site) * TRANSPORT_WEIGHT_TIME
-    if (
-      0 < targetSite.content[0].amount &&
-      out.content[0].amount < out.capacity &&
-      time !== 0
-    ) {
-      if (targetSite.content[0].timestamp + time <= Date.now()) {
-        // local list update
-        targetSite.content[0].amount -= 1
-        out.content[0].name = targetSite.content[0].name
-        out.content[0].amount += 1
-        targetSite.content[0].timestamp += time
-        // db update
-        putStore(targetSite, out)
-        // element update
-        generateElement()
-      }
-    } else {
-      targetSite.content[0].timestamp = 0
-      document.getElementById(`checkbox-${targetSite.site}`).checked = false
+const transportProcess = (senderSite, senderContent) => {
+  if (senderContent.timestamp === 0) return
+  const outputSite = siteList[senderContent.output]
+  const time = Math.abs(
+    senderSite.site - siteList[senderContent.output].site) * TRANSPORT_WEIGHT_TIME
+  if (
+    0 < senderContent.amount &&
+    outputSite.content[0].amount < outputSite.capacity &&
+    time !== 0
+  ) {
+    if (senderContent.timestamp + time <= Date.now()) {
+      // local list update
+      senderContent.amount -= 1
+      outputSite.content[0].name = senderContent.name
+      outputSite.content[0].amount += 1
+      senderContent.timestamp += time
+      // db update
+      putStore(senderSite, outputSite)
+      // element update
+      generateElement()
     }
-  })
+  } else {
+    senderContent.timestamp = 0
+    document.getElementById(`checkbox-${senderSite.site}`).checked = false
+  }
 }
 const convertProcess = targetSite => {
   const reset = () => {
@@ -328,9 +329,9 @@ const convertProcess = targetSite => {
   })
 }
 const convert = () => {
-  siteList.forEach(v => {
-    if (v.content[0].timestamp !== 0) transportProcess(v)
-    convertProcess(v)
+  siteList.forEach(value => {
+    value.content.forEach(valu => transportProcess(value, valu))
+    convertProcess(value)
   })
 }
 const generateElementToBody = () => {
@@ -377,8 +378,7 @@ const setExpandFunction = (expandButton, containerList) => {
   if (displayFlagObject[expandButton.id]) {
     containerList.forEach(v => v.style.display = 'flex')
     expandButton.textContent = '-'
-  }
-  else {
+  } else {
     containerList.forEach(v => v.style.display = 'none')
     expandButton.textContent = '+'
   }
@@ -490,11 +490,11 @@ const generateSite = (building) => {
         'button', '', '', '->', outputContainer)
       outputButtonList.push(button)
       button.addEventListener('click', () => {
-        rewriteOutput(building.site, index)
+        rewriteOutput(building.site, v, index)
         outputButtonList.forEach(v => v.style.display = 'flex')
         button.style.display = 'none'
       })
-      if (building.content[0].output === index) button.style.display = 'none'
+      if (v.output === index) button.style.display = 'none'
     })
     setExpandFunction(outputExpandButton, outputContainerList)
   })
