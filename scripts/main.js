@@ -75,7 +75,6 @@ const buildingGenerator = (index) => {
   return object
 }
 for (let i = 0; i < 3; i++) FIRST_BUILDING_LIST[i] = buildingGenerator(i)
-
 FIRST_BUILDING_LIST[0].content = {
   [MATERIAL_LIST[0]]: {
     amount: 8,
@@ -278,6 +277,7 @@ const transportProcess = async (site, contentName) => {
     const update = async () => {
       // local list update
       site.content[contentName].amount -= 1
+      if (site.content[contentName].amount === 0) site.content[contentName].timestamp = 0
       if (Object.keys(outputSite.content).some(v => v === contentName)) {
       } else {
         outputSite.content[contentName] = {
@@ -288,7 +288,7 @@ const transportProcess = async (site, contentName) => {
         generateContentContainer(outputSite)
       }
       outputSite.content[contentName].amount += 1
-      site.content[contentName].timestamp += time
+      if (site.content[contentName].amount) site.content[contentName].timestamp += time
       // db update
       await putStore(site)
       await putStore(outputSite)
@@ -337,9 +337,7 @@ const convertProcess = async targetSite => {
             if (targetSite.timestamp + CONVERT_WEIGHT_TIME <= Date.now()) {
               Object.entries(va.from).forEach(value => {
                 targetSite.content[value[0]].amount -= value[1]
-                if (targetSite.content[value[0]].amount === 0) {
-                  targetSite.content[value[0]].timestamp = 0
-                }
+                if (targetSite.content[value[0]].amount === 0) targetSite.timestamp = 0
               })
               Object.entries(va.to).forEach(value => {
                 if (Object.keys(targetSite.content).some(v => v === value[0])) {
@@ -353,7 +351,7 @@ const convertProcess = async targetSite => {
                 }
                 console.log(value[0], value[1])
                 targetSite.content[value[0]].amount += value[1]
-                targetSite.timestamp += CONVERT_WEIGHT_TIME
+                if (targetSite.timestamp) targetSite.timestamp += CONVERT_WEIGHT_TIME
               })
               update()
             }
@@ -460,7 +458,7 @@ const generateContentContainer = building => {
       'input', '', `checkbox-${building.site}-${i}`, '', outputEndItem)
     checkbox.type = 'checkbox'
     checkbox.checked = v.timestamp ? true : false
-    checkbox.addEventListener('input', async e => {
+    checkbox.addEventListener('input', async () => {
       v.timestamp = Date.now()
       await putStore(building)
     }, true)
