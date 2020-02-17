@@ -296,6 +296,7 @@ const transportProcess = async (site, contentName) => {
       // element update
       if (bool) generateContentContainer(outputSite)
       elementUpdate(site)
+      elementUpdate(outputSite)
       resolve()
     }
     if (
@@ -601,7 +602,6 @@ const elementUpdate = building => {
     }, 0)} of ${building.capacity}`
   // content amount
   Object.values(building.content).forEach((v, i) => {
-    console.log(document.getElementById(`progress-${building.site}-${i}`))
     document.getElementById(`progress-${building.site}-${i}`).value = v.amount
   })
   // progress bar
