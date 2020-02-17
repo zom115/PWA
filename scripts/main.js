@@ -289,12 +289,10 @@ const transportProcess = (senderSite, foo) => {
       senderSite.content[foo].amount -= 1
       if (Object.keys(outputSite.content).some(v => v === foo)) {
       } else {
-        outputSite.content = {
-          [foo]: {
-            amount: 0,
-            output: 0,
-            timestamp: 0
-          }
+        outputSite.content[foo] = {
+          amount: 0,
+          output: outputSite.site,
+          timestamp: 0
         }
       }
       outputSite.content[foo].amount += 1
@@ -310,38 +308,45 @@ const transportProcess = (senderSite, foo) => {
   }
 }
 const convertProcess = targetSite => {
-  const reset = () => {
-    targetSite.timestamp = 0
-    // document.getElementById(`checkbox-${targetSite.site}`).checked = false
-  }
   Object.keys(targetSite.content).forEach(v => {
     BUILDING_OBJECT[targetSite.name].recipe.forEach(va => {
       // まずcontentがrecipeにあるか
       // from some レシピ検索
-      if (Object.keys(va.from).some(val => val === v.name)) {
+      if (Object.keys(va.from).some(val => val === v)) {
         // 材料足りてるか
-        // TODO remake siteList[n].content for Object
-        const nameObject = {}
-        targetSite.content.forEach(valu => nameObject[valu.name] = valu.amount)
-        if (Object.keys(va.from).every(valu => Object.values(valu) <= nameObject[valu])) {
+        if (Object.keys(va.from).every(val => {
+          return va.from[val] <= targetSite.content[val].amount
+        })) {
           // 足りてたら
           // local list update
-          if (targetSite.timestamp &&
-            targetSite.timestamp + CONVERT_WEIGHT_TIME <= Date.now()
-          ) {
-            va.from.forEach(value => targetSite.content[value].amount -= 1)
-            va.to.forEach(value => {
-              out.content[value].name = Object.keys(value)
-              out.content[value].amount += Object.values(value)
+          if (targetSite.timestamp === 0) targetSite.timestamp = Date.now()
+          if (targetSite.timestamp + CONVERT_WEIGHT_TIME <= Date.now()) {
+            Object.entries(va.from).forEach(value => {
+              targetSite.content[value[0]].amount -= value[1]
+              if (targetSite.content[value[0]].amount === 0) {
+                targetSite.content[value[0]].timestamp = 0
+              }
             })
-            targetSite.timestamp += time
+            Object.entries(va.to).forEach(value => {
+              if (Object.keys(targetSite.content).some(v => v === value[0])) {
+              } else {
+                targetSite.content[value[0]] = {
+                  amount: 0,
+                  output: targetSite.site,
+                  timestamp: 0
+                }
+              }
+              console.log(value[0], value[1])
+              targetSite.content[value[0]].amount += value[1]
+              targetSite.timestamp += CONVERT_WEIGHT_TIME
+            })
             // db update
-            putStore(targetSite, out)
+            // putStore(targetSite)
             // element update
             generateElement()
-          } else reset()
-        } else reset()
-      } else reset()
+          }
+        }
+      }
     })
   })
 }
