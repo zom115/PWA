@@ -273,29 +273,39 @@ const rewriteSite = (former, i) => {
   })
   generateElement()
 }
-const transportProcess = (senderSite, senderContent) => {
-  if (senderContent.timestamp === 0) return
-  const outputSite = siteList[senderContent.output]
+const transportProcess = (senderSite, foo) => {
+  if (senderSite.content[foo].timestamp === 0) return
+  const outputSite = siteList[senderSite.content[foo].output]
   const time = Math.abs(
-    senderSite.site - siteList[senderContent.output].site) * TRANSPORT_WEIGHT_TIME
+    senderSite.site - siteList[senderSite.content[foo].output].site) * TRANSPORT_WEIGHT_TIME
   if (
-    0 < senderContent.amount &&
-    Object.values(outputSite.content)[0].amount < outputSite.capacity &&
+    0 < senderSite.content[foo].amount &&
+    Object.values(outputSite.content).reduce((acc, cur) => {
+      return acc + cur.amount}, 0) < outputSite.capacity &&
     time !== 0
   ) {
-    if (senderContent.timestamp + time <= Date.now()) {
+    if (senderSite.content[foo].timestamp + time <= Date.now()) {
       // local list update
-      senderContent.amount -= 1
-      Object.keys(outputSite.content)[0].name = senderContent.name
-      Object.values(outputSite.content)[0].amount += 1
-      senderContent.timestamp += time
+      senderSite.content[foo].amount -= 1
+      if (Object.keys(outputSite.content).some(v => v === foo)) {
+      } else {
+        outputSite.content = {
+          [foo]: {
+            amount: 0,
+            output: 0,
+            timestamp: 0
+          }
+        }
+      }
+      outputSite.content[foo].amount += 1
+      senderSite.content[foo].timestamp += time
       // db update
       putStore(senderSite, outputSite)
       // element update
       generateElement()
     }
   } else {
-    senderContent.timestamp = 0
+    senderSite.content[foo].timestamp = 0
     document.getElementById(`checkbox-${senderSite.site}`).checked = false
   }
 }
@@ -337,7 +347,7 @@ const convertProcess = targetSite => {
 }
 const convert = () => {
   siteList.forEach(value => {
-    Object.values(value.content).forEach(valu => transportProcess(value, valu))
+    Object.keys(value.content).forEach(valu => transportProcess(value, valu))
     convertProcess(value)
   })
 }
@@ -464,9 +474,9 @@ const generateSite = (building) => {
       return acc + cur.amount
     }, 0)} of ${building.capacity}`, topContainer)
   const containerBox = createElement('div', 'box', '', '', siteBox)
-  Object.values(building.content).forEach(v => {
+  Object.values(building.content).forEach((v, i) => {
     const contentContainer = createElement('div', 'container', '', '', containerBox)
-    createElement('span', '', '', v.name, contentContainer)
+    createElement('span', '', '', Object.keys(building.content)[i], contentContainer)
     createElement('span', '', '', v.amount, contentContainer)
     const progressContainer = createElement('div', 'container', '', '', containerBox)
     const progress = createElement(
