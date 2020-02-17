@@ -264,49 +264,53 @@ const sortingSite = async (senderSiteIndex, destinationSiteIndex) => {
           }
         }
       })
-      putStore(v)
+      putStore(v) // TODO await
     })
     await generateElement()
     resolve()
   })
 }
-const transportProcess = async (senderSite, foo) => {
+const transportProcess = async (site, content) => {
   return new Promise(async resolve => {
     const update = async () => {
       // local list update
-      senderSite.content[foo].amount -= 1
-      if (Object.keys(outputSite.content).some(v => v === foo)) {
+      site.content[content].amount -= 1
+      if (Object.keys(outputSite.content).some(v => v === content)) {
       } else {
-        outputSite.content[foo] = {
+        outputSite.content[content] = {
           amount: 0,
           output: outputSite.site,
           timestamp: 0
         }
       }
-      outputSite.content[foo].amount += 1
-      senderSite.content[foo].timestamp += time
+      outputSite.content[content].amount += 1
+      site.content[content].timestamp += time
       // db update
-      await putStore(senderSite)
+      await putStore(site)
       await putStore(outputSite)
       // element update
       // generateElement()
       resolve()
     }
-    if (senderSite.content[foo].timestamp === 0) resolve()
-    const outputSite = siteList[senderSite.content[foo].output]
+    if (site.content[content].timestamp === 0) {
+      resolve()
+      return
+    }
+    console.log('transportProcess()', site, content)
+    const outputSite = siteList[site.content[content].output]
     const time = Math.abs(
-      senderSite.site - siteList[senderSite.content[foo].output].site) * TRANSPORT_WEIGHT_TIME
+      site.site - siteList[site.content[content].output].site) * TRANSPORT_WEIGHT_TIME
     if (
-      0 < senderSite.content[foo].amount &&
+      0 < site.content[content].amount &&
       Object.values(outputSite.content).reduce((acc, cur) => {
         return acc + cur.amount}, 0) < outputSite.capacity &&
       time !== 0
     ) {
-      if (senderSite.content[foo].timestamp + time <= Date.now()) {
+      if (site.content[content].timestamp + time <= Date.now()) {
         update()
       }
     } else {
-      senderSite.content[foo].timestamp = 0
+      site.content[content].timestamp = 0
       // document.getElementById(`checkbox-${senderSite.site}`).checked = false
       resolve()
     }
@@ -523,7 +527,7 @@ const generateSiteBox = (building) => {
     checkbox.type = 'checkbox'
     checkbox.checked = v.timestamp ? true : false
     checkbox.addEventListener('input', async e => {
-      v.timestamp = e.target.checked ? Date.now() : 0
+      v.timestamp = Date.now()
       await putStore(building)
     }, true)
     let outputContainerList = []
@@ -532,8 +536,7 @@ const generateSiteBox = (building) => {
       const outputContainer = createElement('div', 'container', '', '', outputBox)
       outputContainerList.push(outputContainer)
       createElement('span', '', '', `${index} ${value.name}`, outputContainer)
-      const button = createElement(
-        'button', '', '', '->', outputContainer)
+      const button = createElement('button', '', '', '->', outputContainer)
       outputButtonList.push(button)
       button.addEventListener('click', async () => {
         await rewriteOutput(building.site, v, index)
