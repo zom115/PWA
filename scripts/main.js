@@ -323,9 +323,15 @@ const convertProcess = async targetSite => {
       BUILDING_OBJECT[targetSite.name].recipe.forEach(va => {
         // recipe search
         if (Object.keys(va.from).some(val => val === v)) {
-          if (Object.keys(va.from).every(val => {
-            return va.from[val] <= targetSite.content[val].amount
-          })) {
+          if (
+            Object.keys(va.from).every(val => {
+              return va.from[val] <= targetSite.content[val].amount
+            }) &&
+            Object.values(va.to).reduce((acc, cur) => {return acc + cur}, 0) +
+            Object.values(targetSite.content).reduce((acc, cur) => {
+            return acc + cur.amount}, 0) <=
+            targetSite.capacity
+          ) {
             // local list update
             if (targetSite.timestamp === 0) targetSite.timestamp = Date.now()
             if (targetSite.timestamp + CONVERT_WEIGHT_TIME <= Date.now()) {
