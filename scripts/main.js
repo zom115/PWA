@@ -112,7 +112,7 @@ let showConversionFlag = false
 const hideConversionToggle = () => {
   showConversionFlag = !showConversionFlag
   document.getElementById`site`.textContent = 'Site'
-  siteList.forEach(v => generateSite(v))
+  siteList.forEach(v => generateSiteBox(v))
 }
 let db
 const openDb = () => {
@@ -204,7 +204,7 @@ const putStore = (site1, site2) => {
     const store = getObjectStore(STORE_NAME_LIST[0], 'readwrite')
     const request1 = store.put(site1)
     request1.onsuccess = () => {
-      console.log(site1, 'put success')
+      console.log('put store')
       if (site2 === undefined) resolve()
       else {
         const request2 = store.put(site2)
@@ -239,50 +239,43 @@ const getDb = num => {
 //     console.error('clearObjectStore:', e.target.errorCode)
 //   }
 // }
-const rewriteOutput = (formerIndex, formerContent, index) => {
-  // local list update
-  formerContent.output = index
-  // db update
-  putStore(siteList[formerIndex])
-  // element update
-  generateElement()
-}
-const sortingSite = (senderSiteIndex, destinationSiteIndex) => {
-  console.log('sorting site')
-  siteList.splice(destinationSiteIndex, 0, siteList.splice(senderSiteIndex, 1)[0])
-  siteList.forEach(v => console.log(v.name))
-  siteList.forEach((v, index) => {
-    v.site = index
-    Object.values(v.content).forEach(value => {
-      if (value.output === senderSiteIndex) value.output = destinationSiteIndex
-      else if (senderSiteIndex < destinationSiteIndex) {
-        if (senderSiteIndex <= value.output && value.output <= destinationSiteIndex) {
-          value.output -= 1
-        }
-      } else {
-        if (destinationSiteIndex <= value.output && value.output <= senderSiteIndex) {
-          value.output += 1
-        }
-      }
-    })
-    putStore(v)
+const rewriteOutput = async (formerIndex, formerContent, index) => {
+  return new Promise( async resolve => {
+    // local list update
+    formerContent.output = index
+    // db update
+    await putStore(siteList[formerIndex])
+    // element update
+    await generateElement()
+    resolve()
   })
-  siteList.forEach(v => console.log(`  ${v.name}`))
-  console.log('rewrite site')
-  generateElement()
 }
-const transportProcess = (senderSite, foo) => {
-  if (senderSite.content[foo].timestamp === 0) return
-  const outputSite = siteList[senderSite.content[foo].output]
-  const time = Math.abs(
-    senderSite.site - siteList[senderSite.content[foo].output].site) * TRANSPORT_WEIGHT_TIME
-  if (
-    0 < senderSite.content[foo].amount &&
-    Object.values(outputSite.content).reduce((acc, cur) => {
-      return acc + cur.amount}, 0) < outputSite.capacity &&
-    time !== 0
-  ) {
-    if (senderSite.content[foo].timestamp + time <= Date.now()) {
+const sortingSite = async (senderSiteIndex, destinationSiteIndex) => {
+  return new Promise(async resolve => {
+    siteList.splice(destinationSiteIndex, 0, siteList.splice(senderSiteIndex, 1)[0])
+    siteList.forEach((v, index) => {
+      v.site = index
+      Object.values(v.content).forEach(value => {
+        if (value.output === senderSiteIndex) value.output = destinationSiteIndex
+        else if (senderSiteIndex < destinationSiteIndex) {
+          if (senderSiteIndex <= value.output && value.output <= destinationSiteIndex) {
+            value.output -= 1
+          }
+        } else {
+          if (destinationSiteIndex <= value.output && value.output <= senderSiteIndex) {
+            value.output += 1
+          }
+        }
+      })
+      putStore(v)
+    })
+    await generateElement()
+    resolve()
+  })
+}
+const transportProcess = async (senderSite, foo) => {
+  return new Promise(async resolve => {
+    const update = async () => {
       // local list update
       senderSite.content[foo].amount -= 1
       if (Object.keys(outputSite.content).some(v => v === foo)) {
@@ -296,62 +289,90 @@ const transportProcess = (senderSite, foo) => {
       outputSite.content[foo].amount += 1
       senderSite.content[foo].timestamp += time
       // db update
-      putStore(senderSite, outputSite)
+      await putStore(senderSite, outputSite)
       // element update
       generateElement()
+      resolve()
     }
-  } else {
-    senderSite.content[foo].timestamp = 0
-    document.getElementById(`checkbox-${senderSite.site}`).checked = false
-  }
+    if (senderSite.content[foo].timestamp === 0) resolve()
+    const outputSite = siteList[senderSite.content[foo].output]
+    const time = Math.abs(
+      senderSite.site - siteList[senderSite.content[foo].output].site) * TRANSPORT_WEIGHT_TIME
+    if (
+      0 < senderSite.content[foo].amount &&
+      Object.values(outputSite.content).reduce((acc, cur) => {
+        return acc + cur.amount}, 0) < outputSite.capacity &&
+      time !== 0
+    ) {
+      if (senderSite.content[foo].timestamp + time <= Date.now()) {
+        update()
+      }
+    } else {
+      senderSite.content[foo].timestamp = 0
+      document.getElementById(`checkbox-${senderSite.site}`).checked = false
+      resolve()
+    }
+  })
 }
-const convertProcess = targetSite => {
-  Object.keys(targetSite.content).forEach(v => {
-    BUILDING_OBJECT[targetSite.name].recipe.forEach(va => {
-      // まずcontentがrecipeにあるか
-      // from some レシピ検索
-      if (Object.keys(va.from).some(val => val === v)) {
-        // 材料足りてるか
-        if (Object.keys(va.from).every(val => {
-          return va.from[val] <= targetSite.content[val].amount
-        })) {
-          // 足りてたら
-          // local list update
-          if (targetSite.timestamp === 0) targetSite.timestamp = Date.now()
-          if (targetSite.timestamp + CONVERT_WEIGHT_TIME <= Date.now()) {
-            Object.entries(va.from).forEach(value => {
-              targetSite.content[value[0]].amount -= value[1]
-              if (targetSite.content[value[0]].amount === 0) {
-                targetSite.content[value[0]].timestamp = 0
-              }
-            })
-            Object.entries(va.to).forEach(value => {
-              if (Object.keys(targetSite.content).some(v => v === value[0])) {
-              } else {
-                targetSite.content[value[0]] = {
-                  amount: 0,
-                  output: targetSite.site,
-                  timestamp: 0
+const convertProcess = async targetSite => {
+  return new Promise(resolve => {
+    const update = async () => {
+      // db update
+      await putStore(targetSite)
+      // element update
+      await generateElement()
+      resolve()
+    }
+    Object.keys(targetSite.content).forEach(v => {
+      BUILDING_OBJECT[targetSite.name].recipe.forEach(va => {
+        // まずcontentがrecipeにあるか
+        // from some レシピ検索
+        if (Object.keys(va.from).some(val => val === v)) {
+          // 材料足りてるか
+          if (Object.keys(va.from).every(val => {
+            return va.from[val] <= targetSite.content[val].amount
+          })) {
+            // 足りてたら
+            // local list update
+            if (targetSite.timestamp === 0) targetSite.timestamp = Date.now()
+            if (targetSite.timestamp + CONVERT_WEIGHT_TIME <= Date.now()) {
+              Object.entries(va.from).forEach(value => {
+                targetSite.content[value[0]].amount -= value[1]
+                if (targetSite.content[value[0]].amount === 0) {
+                  targetSite.content[value[0]].timestamp = 0
                 }
-              }
-              console.log(value[0], value[1])
-              targetSite.content[value[0]].amount += value[1]
-              targetSite.timestamp += CONVERT_WEIGHT_TIME
-            })
-            // db update
-            // putStore(targetSite)
-            // element update
-            generateElement()
+              })
+              Object.entries(va.to).forEach(value => {
+                if (Object.keys(targetSite.content).some(v => v === value[0])) {
+                } else {
+                  targetSite.content[value[0]] = {
+                    amount: 0,
+                    output: targetSite.site,
+                    timestamp: 0
+                  }
+                }
+                console.log(value[0], value[1])
+                targetSite.content[value[0]].amount += value[1]
+                targetSite.timestamp += CONVERT_WEIGHT_TIME
+              })
+              update()
+            }
           }
         }
-      }
+      })
     })
+    resolve()
   })
 }
 const convert = () => {
-  siteList.forEach(value => {
-    Object.keys(value.content).forEach(valu => transportProcess(value, valu))
-    convertProcess(value)
+  return new Promise(async resolve => {
+    await Promise.all(siteList.map(async v => {
+      await Promise.all(Object.keys(v.content).map(async val => {
+        await transportProcess(v, val)
+      }))
+      await convertProcess(v)
+    }))
+    resolve()
   })
 }
 const generateElementToBody = () => {
@@ -390,7 +411,7 @@ const createElement = (e, c, i = '', t = '', a) => {
   if (a !== undefined) a.appendChild(element)
   return element
 }
-const setExpandFunction = (expandButton, containerList) => {
+const setExpandFunction = async (expandButton, containerList) => {
   if (displayFlagObject[expandButton.id] === undefined) {
     displayFlagObject[expandButton.id] = false
     expandButton.textContent = '+'
@@ -402,15 +423,19 @@ const setExpandFunction = (expandButton, containerList) => {
     containerList.forEach(v => v.style.display = 'none')
     expandButton.textContent = '+'
   }
-  expandButton.addEventListener('click', () => {
-    displayFlagObject[expandButton.id] = !displayFlagObject[expandButton.id]
-    expandButton.textContent = expandButton.textContent === '+' ? '-' : '+'
-    containerList.forEach(v => {
-      v.style.display = v.style.display === 'none' ? 'flex' : 'none'
+  await expandButton.addEventListener('click', async () => {
+    console.log('click', expandButton.id)
+    return new Promise(resolve => {
+      displayFlagObject[expandButton.id] = !displayFlagObject[expandButton.id]
+      expandButton.textContent = expandButton.textContent === '+' ? '-' : '+'
+      containerList.forEach(v => {
+        v.style.display = v.style.display === 'none' ? 'flex' : 'none'
+      })
+      resolve()
     })
   })
 }
-const generateSorting = (building, box) => {
+const generateSortingBox = (building, box) => {
   const sortingBox = createElement('div', 'box', `sorting-${building.site}`, '', box)
   sortingBox.textContent = null
   const sortingHeadContainer = createElement('div', 'container', '', '', sortingBox)
@@ -436,15 +461,15 @@ const generateSorting = (building, box) => {
       const button = createElement(
         'button', '', `sorting-${building.site}-${i}`, '->', sortingContainer)
       sortingButtonList.push(button)
-      button.addEventListener('click', () => {
-        sortingSite(building.site, i)
+      button.addEventListener('click', async () => {
+        await sortingSite(building.site, i)
       })
     }
   })
   setExpandFunction(sortingExpandButton, sortingContainerList)
   return sortingBox
 }
-const generateConversion = (building, box) => {
+const generateConversionBox = (building, box) => {
   const recipeBox = createElement('div', 'box', `recipe-${building.site}`, '', box)
   recipeBox.textContent = null
   if (showConversionFlag) return recipeBox
@@ -463,7 +488,7 @@ const generateConversion = (building, box) => {
   setExpandFunction(recipeExpandButton, recipeContainerList)
   return recipeBox
 }
-const generateSite = (building) => {
+const generateSiteBox = (building) => {
   const siteBox = createElement('div', 'box', '', '', document.getElementById`site`)
   const topContainer = createElement('div', 'container', '', '', siteBox)
   const topStartItem = createElement('span', '', '', '', topContainer)
@@ -489,7 +514,7 @@ const generateSite = (building) => {
     const outputBox = createElement('div', 'box', '', '', containerBox)
     const outputTopContainer = createElement('div', 'container', '', '', outputBox)
     const outputExpandButton = createElement(
-      'button', '', `output-button-${building.site}`, '', outputTopContainer)
+      'button', '', `output-button-${building.site}-${i}`, '', outputTopContainer)
     const outputEndItem = createElement('span', '', '', '', outputTopContainer)
     createElement(
       'span', '', '',
@@ -499,7 +524,10 @@ const generateSite = (building) => {
       'input', '', `checkbox-${building.site}`, '', outputEndItem)
     checkbox.type = 'checkbox'
     checkbox.checked = v.timestamp ? true : false
-    checkbox.addEventListener('input', e => v.timestamp = e.target.checked ? Date.now() : 0)
+    checkbox.addEventListener('input', async e => {
+      v.timestamp = e.target.checked ? Date.now() : 0
+      await putStore(v)
+    })
     let outputContainerList = []
     let outputButtonList = []
     siteList.forEach((value, index) => {
@@ -509,8 +537,8 @@ const generateSite = (building) => {
       const button = createElement(
         'button', '', '', '->', outputContainer)
       outputButtonList.push(button)
-      button.addEventListener('click', () => {
-        rewriteOutput(building.site, v, index)
+      button.addEventListener('click', async () => {
+        await rewriteOutput(building.site, v, index)
         outputButtonList.forEach(v => v.style.display = 'flex')
         button.style.display = 'none'
       })
@@ -521,8 +549,8 @@ const generateSite = (building) => {
 
   const boxList = [
     containerBox,
-    generateSorting(building, siteBox),
-    generateConversion(building, siteBox)
+    generateSortingBox(building, siteBox),
+    generateConversionBox(building, siteBox)
   ]
   setExpandFunction(detailExpandButton, boxList)
 }
@@ -557,32 +585,37 @@ const generateElement = () => {
     document.getElementById`site`.textContent = 'Site'
     document.getElementById`market`.textContent = 'Market'
     document.getElementById`setting`.textContent = 'Setting'
-    siteList.forEach(v => generateSite(v))
+    siteList.forEach(v => generateSiteBox(v))
     marketList.forEach(v => generateMarket(v))
     SETTING_LIST.forEach(v => generateSetting(v))
     resolve()
   })
 }
 const displayUpdate = () => {
-  const formatTime = argTime => {
-    const mm = ('0' + Math.floor(argTime / 6e4)).slice(-2)
-    const ss = ('0' + Math.floor(argTime % 6e4 / 1e3)).slice(-2)
-    const ms = ('00' + argTime % 1e3).slice(-3)
-    let time = ms
-    if (0 < mm || 0 < ss) time = ss + ':' + time
-    if (0 < mm) time = mm + ':' + time
-    return time
-  }
-  document.getElementById`connectedTime`.textContent = formatTime(Date.now() - openTime)
+  return new Promise(async resolve => {
+    const formatTime = argTime => {
+      return new Promise(resolve => {
+        const mm = ('0' + Math.floor(argTime / 6e4)).slice(-2)
+        const ss = ('0' + Math.floor(argTime % 6e4 / 1e3)).slice(-2)
+        const ms = ('00' + argTime % 1e3).slice(-3)
+        let time = ms
+        if (0 < mm || 0 < ss) time = ss + ':' + time
+        if (0 < mm) time = mm + ':' + time
+        return resolve(time)
+      })
+    }
+    document.getElementById`connectedTime`.textContent = await formatTime(Date.now() - openTime)
+    resolve()
+  })
 }
 const asyncFn = async () => {
   await openDb()
   main()
 }
 asyncFn()
-const main = () => {
-  convert()
-  displayUpdate()
+const main = async () => {
+  await convert()
+  await displayUpdate()
   window.requestAnimationFrame(main)
 }
 }
