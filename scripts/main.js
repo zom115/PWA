@@ -398,7 +398,7 @@ const generateElementToBody = () => {
     p.appendChild(button)
     button.id = 'timeReset'
     button.textContent = 'Reset'
-    button.addEventListener('click', () => openTime = Date.now())
+    button.addEventListener('click', () => openTime = Date.now(), true)
     mainElement.appendChild(p)
     resolve()
   })
@@ -411,7 +411,7 @@ const createElement = (e, c, i = '', t = '', a) => {
   if (a !== undefined) a.appendChild(element)
   return element
 }
-const setExpandFunction = async (expandButton, containerList) => {
+const setExpandFunction = (expandButton, containerList) => {
   if (displayFlagObject[expandButton.id] === undefined) {
     displayFlagObject[expandButton.id] = false
     expandButton.textContent = '+'
@@ -423,7 +423,7 @@ const setExpandFunction = async (expandButton, containerList) => {
     containerList.forEach(v => v.style.display = 'none')
     expandButton.textContent = '+'
   }
-  await expandButton.addEventListener('click', async () => {
+  document.getElementById(expandButton.id).addEventListener('click', async () => {
     console.log('click', expandButton.id)
     return new Promise(resolve => {
       displayFlagObject[expandButton.id] = !displayFlagObject[expandButton.id]
@@ -433,7 +433,7 @@ const setExpandFunction = async (expandButton, containerList) => {
       })
       resolve()
     })
-  })
+  }, true)
 }
 const generateSortingBox = (building, box) => {
   const sortingBox = createElement('div', 'box', `sorting-${building.site}`, '', box)
@@ -463,7 +463,7 @@ const generateSortingBox = (building, box) => {
       sortingButtonList.push(button)
       button.addEventListener('click', async () => {
         await sortingSite(building.site, i)
-      })
+      }, true)
     }
   })
   setExpandFunction(sortingExpandButton, sortingContainerList)
@@ -527,7 +527,7 @@ const generateSiteBox = (building) => {
     checkbox.addEventListener('input', async e => {
       v.timestamp = e.target.checked ? Date.now() : 0
       await putStore(v)
-    })
+    }, true)
     let outputContainerList = []
     let outputButtonList = []
     siteList.forEach((value, index) => {
@@ -541,7 +541,7 @@ const generateSiteBox = (building) => {
         await rewriteOutput(building.site, v, index)
         outputButtonList.forEach(v => v.style.display = 'flex')
         button.style.display = 'none'
-      })
+      }, true)
       if (v.output === index) button.style.display = 'none'
     })
     setExpandFunction(outputExpandButton, outputContainerList)
@@ -571,14 +571,14 @@ const generateMarket = v => {
     await putStore(building)
     siteList.push(building)
     generateElement()
-  })
+  }, true)
   createElement('progress', '', '', '', box)
 }
 const generateSetting = v => {
   const box = createElement('div', 'box', '', '', document.getElementById`setting`)
   const container = createElement('div', 'container', '', '', box)
   const button = createElement('button', '', '', v.name, container)
-  button.addEventListener('click', v.function)
+  button.addEventListener('click', v.function, true)
 }
 const generateElement = () => {
   return new Promise(resolve => {
