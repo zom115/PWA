@@ -290,6 +290,7 @@ const transportProcess = async (site, content) => {
       await putStore(outputSite)
       // element update
       // generateElement()
+      console.log('transport end')
       resolve()
     }
     if (site.content[content].timestamp === 0) {
@@ -306,14 +307,17 @@ const transportProcess = async (site, content) => {
         return acc + cur.amount}, 0) < outputSite.capacity &&
       time !== 0
     ) {
+      console.log('here')
       if (site.content[content].timestamp + time <= Date.now()) {
+        console.log('here here')
         update()
       }
     } else {
       site.content[content].timestamp = 0
       // document.getElementById(`checkbox-${senderSite.site}`).checked = false
-      resolve()
+      console.log('transport timestamp 0')
     }
+    resolve()
   })
 }
 const convertProcess = async targetSite => {
