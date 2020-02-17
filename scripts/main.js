@@ -199,17 +199,13 @@ const putEveryStore = (storeName, obj) => {
     request1.onerror = e => {console.log(e.target.errorCode)}
   })
 }
-const putStore = (site1, site2) => {
+const putStore = site => {
   return new Promise(resolve => {
     const store = getObjectStore(STORE_NAME_LIST[0], 'readwrite')
-    const request1 = store.put(site1)
+    const request1 = store.put(site)
     request1.onsuccess = () => {
       console.log('put store')
-      if (site2 === undefined) resolve()
-      else {
-        const request2 = store.put(site2)
-        request2.onsuccess = () => resolve()
-      }
+      resolve()
     }
   })
 }
@@ -240,6 +236,7 @@ const getDb = num => {
 //   }
 // }
 const rewriteOutput = async (formerIndex, formerContent, index) => {
+  console.log('rewriteOutput()')
   return new Promise( async resolve => {
     // local list update
     formerContent.output = index
@@ -289,9 +286,10 @@ const transportProcess = async (senderSite, foo) => {
       outputSite.content[foo].amount += 1
       senderSite.content[foo].timestamp += time
       // db update
-      await putStore(senderSite, outputSite)
+      await putStore(senderSite)
+      await putStore(outputSite)
       // element update
-      generateElement()
+      // generateElement()
       resolve()
     }
     if (senderSite.content[foo].timestamp === 0) resolve()
@@ -309,7 +307,7 @@ const transportProcess = async (senderSite, foo) => {
       }
     } else {
       senderSite.content[foo].timestamp = 0
-      document.getElementById(`checkbox-${senderSite.site}`).checked = false
+      // document.getElementById(`checkbox-${senderSite.site}`).checked = false
       resolve()
     }
   })
@@ -320,7 +318,7 @@ const convertProcess = async targetSite => {
       // db update
       await putStore(targetSite)
       // element update
-      await generateElement()
+      // await generateElement()
       resolve()
     }
     Object.keys(targetSite.content).forEach(v => {
@@ -526,7 +524,7 @@ const generateSiteBox = (building) => {
     checkbox.checked = v.timestamp ? true : false
     checkbox.addEventListener('input', async e => {
       v.timestamp = e.target.checked ? Date.now() : 0
-      await putStore(v)
+      await putStore(building)
     }, true)
     let outputContainerList = []
     let outputButtonList = []
@@ -570,7 +568,7 @@ const generateMarket = v => {
     console.log(building)
     await putStore(building)
     siteList.push(building)
-    generateElement()
+    // generateElement()
   }, true)
   createElement('progress', '', '', '', box)
 }
@@ -581,6 +579,7 @@ const generateSetting = v => {
   button.addEventListener('click', v.function, true)
 }
 const generateElement = () => {
+  console.log('generateElement()')
   return new Promise(resolve => {
     document.getElementById`site`.textContent = 'Site'
     document.getElementById`market`.textContent = 'Market'
