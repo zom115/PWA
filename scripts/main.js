@@ -26,8 +26,8 @@ const BUILDING_OBJECT = {
   [BUILDING_LIST[0]]: {
     capacity: 40,
     recipe: [{
-      from: {[MATERIAL_LIST[0]]: 1},
-      to: {[MATERIAL_LIST[0]]: 1}
+      from: {'': 0},
+      to: {'': 0}
     }],
     price: {
       value: 32+8,
@@ -56,8 +56,8 @@ const BUILDING_OBJECT = {
   }, [BUILDING_LIST[3]]: {
     capacity: 2 ** 6 + 2 ** 4,
     recipe: [{
-      from: {[MATERIAL_LIST[1]]: 1},
-      to: {[MATERIAL_LIST[1]]: 1}
+      from: {'': 0},
+      to: {'': 0}
     }],
     price: {
       value: 2 ** 6 + 2 ** 4,
@@ -270,53 +270,41 @@ const sortingSite = async (senderSiteIndex, destinationSiteIndex) => {
     resolve()
   })
 }
-const transportProcess = async (site, content) => {
+const transportProcess = async (site, contentName) => {
   return new Promise(async resolve => {
+    const time = Math.abs(
+      site.site - siteList[site.content[contentName].output].site) * TRANSPORT_WEIGHT_TIME
     const update = async () => {
       // local list update
-      site.content[content].amount -= 1
-      if (Object.keys(outputSite.content).some(v => v === content)) {
+      site.content[contentName].amount -= 1
+      if (Object.keys(outputSite.content).some(v => v === contentName)) {
       } else {
-        outputSite.content[content] = {
+        outputSite.content[contentName] = {
           amount: 0,
           output: outputSite.site,
           timestamp: 0
         }
       }
-      outputSite.content[content].amount += 1
-      site.content[content].timestamp += time
+      outputSite.content[contentName].amount += 1
+      site.content[contentName].timestamp += time
       // db update
       await putStore(site)
       await putStore(outputSite)
       // element update
       // generateElement()
-      console.log('transport end')
       resolve()
     }
-    if (site.content[content].timestamp === 0) {
-      resolve()
-      return
-    }
-    console.log('transportProcess()', site, content)
-    const outputSite = siteList[site.content[content].output]
-    const time = Math.abs(
-      site.site - siteList[site.content[content].output].site) * TRANSPORT_WEIGHT_TIME
+    const outputSite = siteList[site.content[contentName].output]
     if (
-      0 < site.content[content].amount &&
-      Object.values(outputSite.content).reduce((acc, cur) => {
-        return acc + cur.amount}, 0) < outputSite.capacity &&
-      time !== 0
-    ) {
-      console.log('here')
-      if (site.content[content].timestamp + time <= Date.now()) {
-        console.log('here here')
-        update()
-      }
-    } else {
-      site.content[content].timestamp = 0
-      // document.getElementById(`checkbox-${senderSite.site}`).checked = false
-      console.log('transport timestamp 0')
-    }
+      time === 0 ||
+      site.content[contentName].amount <= 0 ||
+      outputSite.capacity <= Object.values(outputSite.content).reduce((acc, cur) => {
+        return acc + cur.amount}, 0)
+      ) site.content[contentName].timestamp = 0
+    if (
+      site.content[contentName].timestamp !== 0 &&
+      site.content[contentName].timestamp + time <= Date.now()
+    ) update()
     resolve()
   })
 }
