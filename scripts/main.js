@@ -272,13 +272,16 @@ const sortingSite = async (senderSiteIndex, destinationSiteIndex) => {
 }
 const transportProcess = async (site, contentName) => {
   return new Promise(async resolve => {
+    const outputSite = siteList[site.content[contentName].output]
     const time = Math.abs(
       site.site - siteList[site.content[contentName].output].site) * TRANSPORT_WEIGHT_TIME
     const update = async () => {
       // local list update
       site.content[contentName].amount -= 1
+      let bool = false
       if (Object.keys(outputSite.content).some(v => v === contentName)) {
       } else {
+        bool = true
         outputSite.content[contentName] = {
           amount: 0,
           output: outputSite.site,
@@ -291,10 +294,10 @@ const transportProcess = async (site, contentName) => {
       await putStore(site)
       await putStore(outputSite)
       // element update
-      // generateElement()
+      if (bool) generateContentContainer(outputSite)
+      elementUpdate(site)
       resolve()
     }
-    const outputSite = siteList[site.content[contentName].output]
     if (
       time === 0 ||
       site.content[contentName].amount <= 0 ||
@@ -310,23 +313,22 @@ const transportProcess = async (site, contentName) => {
 }
 const convertProcess = async targetSite => {
   return new Promise(resolve => {
+    let bool = false
     const update = async () => {
       // db update
       await putStore(targetSite)
       // element update
-      // await generateElement()
+      generateContentContainer(targetSite)
+      elementUpdate(targetSite)
       resolve()
     }
     Object.keys(targetSite.content).forEach(v => {
       BUILDING_OBJECT[targetSite.name].recipe.forEach(va => {
-        // まずcontentがrecipeにあるか
-        // from some レシピ検索
+        // recipe search
         if (Object.keys(va.from).some(val => val === v)) {
-          // 材料足りてるか
           if (Object.keys(va.from).every(val => {
             return va.from[val] <= targetSite.content[val].amount
           })) {
-            // 足りてたら
             // local list update
             if (targetSite.timestamp === 0) targetSite.timestamp = Date.now()
             if (targetSite.timestamp + CONVERT_WEIGHT_TIME <= Date.now()) {
@@ -339,6 +341,7 @@ const convertProcess = async targetSite => {
               Object.entries(va.to).forEach(value => {
                 if (Object.keys(targetSite.content).some(v => v === value[0])) {
                 } else {
+                  bool = true
                   targetSite.content[value[0]] = {
                     amount: 0,
                     output: targetSite.site,
@@ -429,6 +432,53 @@ const setExpandFunction = (expandButton, containerList) => {
     })
   }, true)
 }
+const generateContentContainer = building => {
+  const contentBox = document.getElementById(`content-box-${building.site}`)
+  contentBox.textContent = null
+  Object.values(building.content).forEach((v, i) => {
+    const contentContainer = createElement('div', 'container', '', '', contentBox)
+    createElement('span', '', '', Object.keys(building.content)[i], contentContainer)
+    createElement('span', '', '', v.amount, contentContainer)
+    const progressContainer = createElement('div', 'container', '', '', contentBox)
+    const progress = createElement(
+      'progress', '', `progress-${building.site}-${i}`, '', progressContainer)
+    progress.max = building.capacity
+    progress.value = v.amount
+    const outputBox = createElement('div', 'box', '', '', contentBox)
+    const outputTopContainer = createElement('div', 'container', '', '', outputBox)
+    const outputExpandButton = createElement(
+      'button', '', `output-button-${building.site}-${i}`, '', outputTopContainer)
+    const outputEndItem = createElement('span', '', '', '', outputTopContainer)
+    createElement(
+      'span', '', '',
+      `to ${v.output} ${siteList[v.output].name}`, outputEndItem)
+    createElement('span', '', '', ' ', outputEndItem)
+    const checkbox = createElement(
+      'input', '', `checkbox-${building.site}`, '', outputEndItem)
+    checkbox.type = 'checkbox'
+    checkbox.checked = v.timestamp ? true : false
+    checkbox.addEventListener('input', async e => {
+      v.timestamp = Date.now()
+      await putStore(building)
+    }, true)
+    let outputContainerList = []
+    let outputButtonList = []
+    siteList.forEach((value, index) => {
+      const outputContainer = createElement('div', 'container', '', '', outputBox)
+      outputContainerList.push(outputContainer)
+      createElement('span', '', '', `${index} ${value.name}`, outputContainer)
+      const button = createElement('button', '', '', '->', outputContainer)
+      outputButtonList.push(button)
+      button.addEventListener('click', async () => {
+        await rewriteOutput(building.site, v, index)
+        outputButtonList.forEach(v => v.style.display = 'flex')
+        button.style.display = 'none'
+      }, true)
+      if (v.output === index) button.style.display = 'none'
+    })
+    setExpandFunction(outputExpandButton, outputContainerList)
+  })
+}
 const generateSortingBox = (building, box) => {
   const sortingBox = createElement('div', 'box', `sorting-${building.site}`, '', box)
   sortingBox.textContent = null
@@ -482,7 +532,7 @@ const generateConversionBox = (building, box) => {
   setExpandFunction(recipeExpandButton, recipeContainerList)
   return recipeBox
 }
-const generateSiteBox = (building) => {
+const generateSiteBox = building => {
   const siteBox = createElement('div', 'box', '', '', document.getElementById`site`)
   const topContainer = createElement('div', 'container', '', '', siteBox)
   const topStartItem = createElement('span', '', '', '', topContainer)
@@ -496,53 +546,10 @@ const generateSiteBox = (building) => {
     `${Object.values(building.content).reduce((acc, cur) => {
       return acc + cur.amount
     }, 0)} of ${building.capacity}`, topContainer)
-  const containerBox = createElement('div', 'box', '', '', siteBox)
-  Object.values(building.content).forEach((v, i) => {
-    const contentContainer = createElement('div', 'container', '', '', containerBox)
-    createElement('span', '', '', Object.keys(building.content)[i], contentContainer)
-    createElement('span', '', '', v.amount, contentContainer)
-    const progressContainer = createElement('div', 'container', '', '', containerBox)
-    const progress = createElement(
-      'progress', '', `progress-${building.site}`, '', progressContainer)
-    progress.max = building.capacity
-    progress.value = v.amount
-    const outputBox = createElement('div', 'box', '', '', containerBox)
-    const outputTopContainer = createElement('div', 'container', '', '', outputBox)
-    const outputExpandButton = createElement(
-      'button', '', `output-button-${building.site}-${i}`, '', outputTopContainer)
-    const outputEndItem = createElement('span', '', '', '', outputTopContainer)
-    createElement(
-      'span', '', '',
-      `to ${v.output} ${siteList[v.output].name}`, outputEndItem)
-    createElement('span', '', '', ' ', outputEndItem)
-    const checkbox = createElement(
-      'input', '', `checkbox-${building.site}`, '', outputEndItem)
-    checkbox.type = 'checkbox'
-    checkbox.checked = v.timestamp ? true : false
-    checkbox.addEventListener('input', async e => {
-      v.timestamp = Date.now()
-      await putStore(building)
-    }, true)
-    let outputContainerList = []
-    let outputButtonList = []
-    siteList.forEach((value, index) => {
-      const outputContainer = createElement('div', 'container', '', '', outputBox)
-      outputContainerList.push(outputContainer)
-      createElement('span', '', '', `${index} ${value.name}`, outputContainer)
-      const button = createElement('button', '', '', '->', outputContainer)
-      outputButtonList.push(button)
-      button.addEventListener('click', async () => {
-        await rewriteOutput(building.site, v, index)
-        outputButtonList.forEach(v => v.style.display = 'flex')
-        button.style.display = 'none'
-      }, true)
-      if (v.output === index) button.style.display = 'none'
-    })
-    setExpandFunction(outputExpandButton, outputContainerList)
-  })
-
+  const contentBox = createElement('div', 'box', `content-box-${building.site}`, '', siteBox)
+  generateContentContainer(building)
   const boxList = [
-    containerBox,
+    contentBox,
     generateSortingBox(building, siteBox),
     generateConversionBox(building, siteBox)
   ]
@@ -593,6 +600,10 @@ const elementUpdate = building => {
       return acc + cur.amount
     }, 0)} of ${building.capacity}`
   // content amount
+  Object.values(building.content).forEach((v, i) => {
+    console.log(document.getElementById(`progress-${building.site}-${i}`))
+    document.getElementById(`progress-${building.site}-${i}`).value = v.amount
+  })
   // progress bar
 }
 const displayUpdate = () => {
@@ -620,7 +631,6 @@ asyncFn()
 const main = async () => {
   await convert()
   await displayUpdate()
-  siteList.forEach(v => elementUpdate(v))
   window.requestAnimationFrame(main)
 }
 }
