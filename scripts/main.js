@@ -451,7 +451,7 @@ const generateContentContainer = building => {
       `to ${v.output} ${siteList[v.output].name}`, outputEndItem)
     createElement('span', '', '', ' ', outputEndItem)
     const checkbox = createElement(
-      'input', '', `checkbox-${building.site}`, '', outputEndItem)
+      'input', '', `checkbox-${building.site}-${i}`, '', outputEndItem)
     checkbox.type = 'checkbox'
     checkbox.checked = v.timestamp ? true : false
     checkbox.addEventListener('input', async e => {
@@ -597,6 +597,8 @@ const elementUpdate = building => {
       return acc + cur.amount
     }, 0)} of ${building.capacity}`
   Object.values(building.content).forEach((v, i) => {
+    document.getElementById(`checkbox-${building.site}-${i}`).checked = v.timestamp ?
+    true : false
     // content amount
     document.getElementById(`amount-${building.site}-${i}`).textContent = v.amount
     // progress bar
