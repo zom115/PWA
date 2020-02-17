@@ -500,7 +500,8 @@ const generateSiteBox = (building) => {
   createElement(
     'span', '', '', `${building.site} ${building.name}`, topStartItem)
   createElement(
-    'span', '', '', `${Object.values(building.content).reduce((acc, cur) => {
+    'span', '', `value-state-${building.site}`,
+    `${Object.values(building.content).reduce((acc, cur) => {
       return acc + cur.amount
     }, 0)} of ${building.capacity}`, topContainer)
   const containerBox = createElement('div', 'box', '', '', siteBox)
@@ -593,6 +594,15 @@ const generateElement = () => {
     resolve()
   })
 }
+const elementUpdate = building => {
+  // top amount of capacity
+  document.getElementById(`value-state-${building.site}`).textContent =
+    `${Object.values(building.content).reduce((acc, cur) => {
+      return acc + cur.amount
+    }, 0)} of ${building.capacity}`
+  // content amount
+  // progress bar
+}
 const displayUpdate = () => {
   return new Promise(async resolve => {
     const formatTime = argTime => {
@@ -618,6 +628,7 @@ asyncFn()
 const main = async () => {
   await convert()
   await displayUpdate()
+  siteList.forEach(v => elementUpdate(v))
   window.requestAnimationFrame(main)
 }
 }
