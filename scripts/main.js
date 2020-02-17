@@ -70,18 +70,25 @@ const buildingGenerator = (index) => {
   const object = {}
   object.name = BUILDING_LIST[index]
   object.capacity = BUILDING_OBJECT[BUILDING_LIST[index]].capacity
-  object.content = [{
-    name: '',
-    amount: 0,
-    output: index,
-    timestamp: 0
-  }]
+  object.content = {
+    '': {
+      amount: 0,
+      output: index,
+      timestamp: 0
+    }
+  }
   object.timestamp = 0
   return object
 }
 for (let i = 0; i < 3; i++) FIRST_BUILDING_LIST[i] = buildingGenerator(i)
-FIRST_BUILDING_LIST[0].content[0].name = MATERIAL_LIST[0]
-FIRST_BUILDING_LIST[0].content[0].amount = 8
+
+FIRST_BUILDING_LIST[0].content = {
+  [MATERIAL_LIST[0]]: {
+    amount: 8,
+    output: 0,
+    timestamp: 0
+  }
+}
 const CONVERT_WEIGHT_TIME = 2e3
 const TRANSPORT_WEIGHT_TIME = 1e3
 const SETTING_LIST = [{
@@ -249,7 +256,7 @@ const rewriteSite = (former, i) => {
   console.log('rewrite site')
   siteList.splice(i, 0, siteList.splice(former, 1)[0])
   siteList.forEach((v, index) => {
-    v.content.forEach(value => {
+    Object.values(v.content).forEach(value => {
       if (value.output === former) value.output = i
       else if (former < i) {
         if (former <= value.output && value.output <= i) {
@@ -273,14 +280,14 @@ const transportProcess = (senderSite, senderContent) => {
     senderSite.site - siteList[senderContent.output].site) * TRANSPORT_WEIGHT_TIME
   if (
     0 < senderContent.amount &&
-    outputSite.content[0].amount < outputSite.capacity &&
+    Object.values(outputSite.content)[0].amount < outputSite.capacity &&
     time !== 0
   ) {
     if (senderContent.timestamp + time <= Date.now()) {
       // local list update
       senderContent.amount -= 1
-      outputSite.content[0].name = senderContent.name
-      outputSite.content[0].amount += 1
+      Object.keys(outputSite.content)[0].name = senderContent.name
+      Object.values(outputSite.content)[0].amount += 1
       senderContent.timestamp += time
       // db update
       putStore(senderSite, outputSite)
@@ -297,7 +304,7 @@ const convertProcess = targetSite => {
     targetSite.timestamp = 0
     // document.getElementById(`checkbox-${targetSite.site}`).checked = false
   }
-  targetSite.content.forEach(v => {
+  Object.keys(targetSite.content).forEach(v => {
     BUILDING_OBJECT[targetSite.name].recipe.forEach(va => {
       // まずcontentがrecipeにあるか
       // from some レシピ検索
@@ -330,7 +337,7 @@ const convertProcess = targetSite => {
 }
 const convert = () => {
   siteList.forEach(value => {
-    value.content.forEach(valu => transportProcess(value, valu))
+    Object.values(value.content).forEach(valu => transportProcess(value, valu))
     convertProcess(value)
   })
 }
@@ -453,11 +460,11 @@ const generateSite = (building) => {
   createElement(
     'span', '', '', `${building.site} ${building.name}`, topStartItem)
   createElement(
-    'span', '', '', `${building.content.reduce((acc, cur) => {
+    'span', '', '', `${Object.values(building.content).reduce((acc, cur) => {
       return acc + cur.amount
     }, 0)} of ${building.capacity}`, topContainer)
   const containerBox = createElement('div', 'box', '', '', siteBox)
-  building.content.forEach(v => {
+  Object.values(building.content).forEach(v => {
     const contentContainer = createElement('div', 'container', '', '', containerBox)
     createElement('span', '', '', v.name, contentContainer)
     createElement('span', '', '', v.amount, contentContainer)
@@ -516,8 +523,8 @@ const generateMarket = v => {
   const button = createElement('button', '', '', 'Install', span)
   button.addEventListener('click', async () => {
     const building = buildingGenerator(v.site)
-    building.content[0].output = building.site = siteList.length
-    building.content[0].amount = -v.value
+    Object.values(building.content)[0].output = building.site = siteList.length
+    Object.values(building.content)[0].amount = -v.value
     console.log('v',v, 'n', v.site, 'l', siteList.length)
     console.log(building)
     await putStore(building)
