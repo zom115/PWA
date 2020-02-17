@@ -1,9 +1,9 @@
 .box {
-  margin: .3rem 0;
+  margin: .5rem 0;
   border-left: .01rem solid lightgray;
   display: flex;
   flex-direction: column;
-  padding-left: .3rem;
+  padding-left: .4rem;
 }
 .container {
   align-items: center;

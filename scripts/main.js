@@ -70,13 +70,7 @@ const buildingGenerator = (index) => {
   const object = {}
   object.name = BUILDING_LIST[index]
   object.capacity = BUILDING_OBJECT[BUILDING_LIST[index]].capacity
-  object.content = {
-    '': {
-      amount: 0,
-      output: index,
-      timestamp: 0
-    }
-  }
+  object.content = {}
   object.timestamp = 0
   return object
 }
