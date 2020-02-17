@@ -278,15 +278,14 @@ const transportProcess = async (site, contentName) => {
     const update = async () => {
       // local list update
       site.content[contentName].amount -= 1
-      let bool = false
       if (Object.keys(outputSite.content).some(v => v === contentName)) {
       } else {
-        bool = true
         outputSite.content[contentName] = {
           amount: 0,
           output: outputSite.site,
           timestamp: 0
         }
+        generateContentContainer(outputSite)
       }
       outputSite.content[contentName].amount += 1
       site.content[contentName].timestamp += time
@@ -294,7 +293,6 @@ const transportProcess = async (site, contentName) => {
       await putStore(site)
       await putStore(outputSite)
       // element update
-      if (bool) generateContentContainer(outputSite)
       elementUpdate(site)
       elementUpdate(outputSite)
       resolve()
@@ -314,12 +312,10 @@ const transportProcess = async (site, contentName) => {
 }
 const convertProcess = async targetSite => {
   return new Promise(resolve => {
-    let bool = false
     const update = async () => {
       // db update
       await putStore(targetSite)
       // element update
-      generateContentContainer(targetSite)
       elementUpdate(targetSite)
       resolve()
     }
@@ -342,12 +338,12 @@ const convertProcess = async targetSite => {
               Object.entries(va.to).forEach(value => {
                 if (Object.keys(targetSite.content).some(v => v === value[0])) {
                 } else {
-                  bool = true
                   targetSite.content[value[0]] = {
                     amount: 0,
                     output: targetSite.site,
                     timestamp: 0
                   }
+                  generateContentContainer(targetSite)
                 }
                 console.log(value[0], value[1])
                 targetSite.content[value[0]].amount += value[1]
@@ -439,7 +435,7 @@ const generateContentContainer = building => {
   Object.values(building.content).forEach((v, i) => {
     const contentContainer = createElement('div', 'container', '', '', contentBox)
     createElement('span', '', '', Object.keys(building.content)[i], contentContainer)
-    createElement('span', '', '', v.amount, contentContainer)
+    createElement('span', '', `amount-${building.site}-${i}`, v.amount, contentContainer)
     const progressContainer = createElement('div', 'container', '', '', contentBox)
     const progress = createElement(
       'progress', '', `progress-${building.site}-${i}`, '', progressContainer)
@@ -600,11 +596,12 @@ const elementUpdate = building => {
     `${Object.values(building.content).reduce((acc, cur) => {
       return acc + cur.amount
     }, 0)} of ${building.capacity}`
-  // content amount
   Object.values(building.content).forEach((v, i) => {
+    // content amount
+    document.getElementById(`amount-${building.site}-${i}`).textContent = v.amount
+    // progress bar
     document.getElementById(`progress-${building.site}-${i}`).value = v.amount
   })
-  // progress bar
 }
 const displayUpdate = () => {
   return new Promise(async resolve => {
