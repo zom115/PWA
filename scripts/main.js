@@ -204,6 +204,7 @@ const putStore = (site1, site2) => {
     const store = getObjectStore(STORE_NAME_LIST[0], 'readwrite')
     const request1 = store.put(site1)
     request1.onsuccess = () => {
+      console.log(site1, 'put success')
       if (site2 === undefined) resolve()
       else {
         const request2 = store.put(site2)
@@ -246,25 +247,28 @@ const rewriteOutput = (formerIndex, formerContent, index) => {
   // element update
   generateElement()
 }
-const rewriteSite = (former, i) => {
-  console.log('rewrite site')
-  siteList.splice(i, 0, siteList.splice(former, 1)[0])
+const sortingSite = (senderSiteIndex, destinationSiteIndex) => {
+  console.log('sorting site')
+  siteList.splice(destinationSiteIndex, 0, siteList.splice(senderSiteIndex, 1)[0])
+  siteList.forEach(v => console.log(v.name))
   siteList.forEach((v, index) => {
+    v.site = index
     Object.values(v.content).forEach(value => {
-      if (value.output === former) value.output = i
-      else if (former < i) {
-        if (former <= value.output && value.output <= i) {
+      if (value.output === senderSiteIndex) value.output = destinationSiteIndex
+      else if (senderSiteIndex < destinationSiteIndex) {
+        if (senderSiteIndex <= value.output && value.output <= destinationSiteIndex) {
           value.output -= 1
         }
       } else {
-        if (i <= value.output && value.output <= former) {
+        if (destinationSiteIndex <= value.output && value.output <= senderSiteIndex) {
           value.output += 1
         }
       }
-      v.site = index
     })
     putStore(v)
   })
+  siteList.forEach(v => console.log(`  ${v.name}`))
+  console.log('rewrite site')
   generateElement()
 }
 const transportProcess = (senderSite, foo) => {
@@ -433,7 +437,7 @@ const generateSorting = (building, box) => {
         'button', '', `sorting-${building.site}-${i}`, '->', sortingContainer)
       sortingButtonList.push(button)
       button.addEventListener('click', () => {
-        rewriteSite(building.site, i)
+        sortingSite(building.site, i)
       })
     }
   })
