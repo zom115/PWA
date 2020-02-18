@@ -20,8 +20,24 @@ STORE_NAME_LIST.forEach(v => LOCAL_BUFFER_OBJECT[v] = [])
 const siteList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[0]]
 const marketList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[1]]
 const statisticsList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[2]]
-const BUILDING_LIST = ['Storage Tank', 'Generator Engine', 'Rig', 'Battery', 'Electric Heater']
-const MATERIAL_LIST = ['Crude Oil', 'EU', 'Hot Crude Oil']
+const BUILDING_LIST = [
+  'Storage Tank',
+  'Generator Engine',
+  'Rig',
+  'Battery',
+  'Electric Heater',
+  'Distillator' // 5
+]
+const MATERIAL_LIST = [
+  'Crude Oil',
+  'EU',
+  'Hot Crude Oil',
+  'Light Distillates',
+  'Middle-Heavy Distillates',
+  'Hot Middle-Heavy Distillates',
+  'Middle Distillates',
+  'Heavy Distillates' // 7
+]
 const BUILDING_OBJECT = {
   [BUILDING_LIST[0]]: {
     capacity: 40,
@@ -37,7 +53,25 @@ const BUILDING_OBJECT = {
     capacity: 20,
     recipe: [{
       from: {[MATERIAL_LIST[0]]: 1},
-      to: {[MATERIAL_LIST[1]]: 2}
+      to: {[MATERIAL_LIST[1]]: 1}
+    }, {
+      from: {[MATERIAL_LIST[2]]: 1},
+      to: {[MATERIAL_LIST[1]]: 1}
+    }, {
+      from: {[MATERIAL_LIST[3]]: 1},
+      to: {[MATERIAL_LIST[1]]: 1}
+    }, {
+      from: {[MATERIAL_LIST[4]]: 1},
+      to: {[MATERIAL_LIST[1]]: 1}
+    }, {
+      from: {[MATERIAL_LIST[5]]: 1},
+      to: {[MATERIAL_LIST[1]]: 1}
+    }, {
+      from: {[MATERIAL_LIST[6]]: 1},
+      to: {[MATERIAL_LIST[1]]: 1}
+    }, {
+      from: {[MATERIAL_LIST[7]]: 1},
+      to: {[MATERIAL_LIST[1]]: 1}
     }],
     price: {
       value: 64+16,
@@ -47,7 +81,7 @@ const BUILDING_OBJECT = {
     capacity: 2 ** 3 + 2,
     recipe: [{
       from: {[MATERIAL_LIST[1]]: 1},
-      to: {[MATERIAL_LIST[0]]: 1}
+      to: {[MATERIAL_LIST[0]]: 2}
     }],
     price: {
       value: 2 ** 6 + 2 ** 4,
@@ -68,10 +102,26 @@ const BUILDING_OBJECT = {
     recipe: [{
       from: {[MATERIAL_LIST[0]]: 1, [MATERIAL_LIST[1]]: 1},
       to: {[MATERIAL_LIST[2]]: 1}
+    }, {
+      from: {[MATERIAL_LIST[0]]: 1, [MATERIAL_LIST[4]]: 1},
+      to: {[MATERIAL_LIST[5]]: 1}
     }],
     price: {
       value: 2 ** 5 + 2 ** 3,
       unit: MATERIAL_LIST[1]
+    }
+  }, [BUILDING_LIST[5]]: {
+    capacity: 2 ** 6 + 2 ** 4,
+    recipe: [{
+      from: {[MATERIAL_LIST[2]]: 3},
+      to: {[MATERIAL_LIST[3]]: 1, [MATERIAL_LIST[4]]: 2}
+    }, {
+      from: {[MATERIAL_LIST[5]]: 3},
+      to: {[MATERIAL_LIST[6]]: 1, [MATERIAL_LIST[7]]: 1}
+    }],
+    price: {
+      value: 0,
+      unit: MATERIAL_LIST[2]
     }
   }
 }
