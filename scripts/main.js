@@ -20,8 +20,8 @@ STORE_NAME_LIST.forEach(v => LOCAL_BUFFER_OBJECT[v] = [])
 const siteList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[0]]
 const marketList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[1]]
 const statisticsList = LOCAL_BUFFER_OBJECT[STORE_NAME_LIST[2]]
-const BUILDING_LIST = ['Storage Tank', 'Generator Engine', 'Rig', 'Battery']
-const MATERIAL_LIST = ['Crude Oil', 'EU']
+const BUILDING_LIST = ['Storage Tank', 'Generator Engine', 'Rig', 'Battery', 'Electric Heater']
+const MATERIAL_LIST = ['Crude Oil', 'EU', 'Hot Crude Oil']
 const BUILDING_OBJECT = {
   [BUILDING_LIST[0]]: {
     capacity: 40,
@@ -63,6 +63,16 @@ const BUILDING_OBJECT = {
       value: 2 ** 6 + 2 ** 4,
       unit: MATERIAL_LIST[1]
     }
+  }, [BUILDING_LIST[4]]: {
+    capacity: 2 ** 6 + 2 ** 4,
+    recipe: [{
+      from: {[MATERIAL_LIST[0]]: 1, [MATERIAL_LIST[1]]: 1},
+      to: {[MATERIAL_LIST[2]]: 1}
+    }],
+    price: {
+      value: 2 ** 5 + 2 ** 3,
+      unit: MATERIAL_LIST[1]
+    }
   }
 }
 const FIRST_BUILDING_LIST = []
@@ -75,13 +85,16 @@ const buildingGenerator = (index) => {
   return object
 }
 for (let i = 0; i < 3; i++) FIRST_BUILDING_LIST[i] = buildingGenerator(i)
-FIRST_BUILDING_LIST[0].content = {
-  [MATERIAL_LIST[0]]: {
-    amount: 8,
-    output: 0,
-    timestamp: 0
+const setContent = (site, material) => {
+  site.content = {
+    [material]: {
+      amount: 8,
+      output: 0,
+      timestamp: 0
+    }
   }
 }
+setContent(FIRST_BUILDING_LIST[0], MATERIAL_LIST[0])
 const CONVERT_WEIGHT_TIME = 2e3
 const TRANSPORT_WEIGHT_TIME = 1e3
 const SETTING_LIST = [{
@@ -319,10 +332,23 @@ const convertProcess = async targetSite => {
       elementUpdate(targetSite)
       resolve()
     }
+    if (Object.values(BUILDING_OBJECT[targetSite.name].recipe[0].from)[0] === 0) {
+      return resolve()
+    }
+    let bool = false
+    BUILDING_OBJECT[targetSite.name].recipe.forEach(v => {
+      if (Object.keys(v.from).every(va => {
+        return Object.keys(targetSite.content).some(val => {
+          return val === va
+        })
+      })) bool = true
+    })
+    if (!bool) return resolve()
     Object.keys(targetSite.content).forEach(v => {
       BUILDING_OBJECT[targetSite.name].recipe.forEach(va => {
         // recipe search
-        if (Object.keys(va.from).some(val => val === v)) {
+        if (Object.keys(va.from).some(val => {
+          return val === v})) {
           if (
             Object.keys(va.from).every(val => {
               return va.from[val] <= targetSite.content[val].amount
@@ -556,23 +582,22 @@ const generateSiteBox = building => {
   ]
   setExpandFunction(detailExpandButton, boxList)
 }
-const generateMarket = v => {
+const generateMarket = site => {
   const marketItem = document.getElementById`market`
   const box = createElement('div', 'box', '', '', marketItem)
   const container = createElement('div', 'container', '', '', box)
-  createElement('span', '', '', v.name, container)
+  createElement('span', '', '', site.name, container)
   const span = createElement('span', '', '', '', container)
-  createElement('span', '', '', `Cost ${v.value} ${v.unit} `, span)
+  createElement('span', '', '', `Cost ${site.value} ${site.unit} `, span)
   const button = createElement('button', '', '', 'Install', span)
   button.addEventListener('click', async () => {
-    const building = buildingGenerator(v.site)
+    const building = buildingGenerator(site.site)
+    setContent(building, BUILDING_OBJECT[site.name].price.unit)
     Object.values(building.content)[0].output = building.site = siteList.length
-    Object.values(building.content)[0].amount = -v.value
-    console.log('v',v, 'n', v.site, 'l', siteList.length)
-    console.log(building)
+    Object.values(building.content)[0].amount = -site.value
     await putStore(building)
     siteList.push(building)
-    // generateElement()
+    generateElement()
   }, true)
   createElement('progress', '', '', '', box)
 }
