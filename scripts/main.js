@@ -535,7 +535,7 @@ const generateContentContainer = building => {
     checkbox.type = 'checkbox'
     checkbox.checked = v.timestamp ? true : false
     checkbox.addEventListener('input', async () => {
-      v.timestamp = Date.now()
+      v.timestamp = v.timestamp ? 0 : Date.now()
       await putStore(building)
     }, true)
     let outputContainerList = []
