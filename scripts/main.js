@@ -641,7 +641,7 @@ const generateMarket = site => {
   const container = createElement('div', 'container', '', '', box)
   createElement('span', '', '', site.name, container)
   const span = createElement('span', '', '', '', container)
-  createElement('span', '', '', `Cost ${site.value} ${site.unit} `, span)
+  createElement('span', '', '', `${site.value} ${site.unit} `, span)
   const button = createElement('button', '', '', 'Install', span)
   button.addEventListener('click', async () => {
     const building = buildingGenerator(site.site)
