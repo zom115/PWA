@@ -401,6 +401,9 @@ const convertProcess = async targetSite => {
           return val === v})) {
           if (
             Object.keys(va.from).every(val => {
+              return targetSite.content[val] !== undefined
+            }) &&
+            Object.keys(va.from).every(val => {
               return va.from[val] <= targetSite.content[val].amount
             }) &&
             Object.values(va.to).reduce((acc, cur) => {return acc + cur}, 0) +
