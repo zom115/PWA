@@ -662,6 +662,7 @@ const generateSetting = v => {
 }
 const generateElement = () => {
   console.log('generateElement()')
+  console.log(siteList)
   return new Promise(resolve => {
     document.getElementById`site`.textContent = 'Site'
     document.getElementById`market`.textContent = 'Market'
