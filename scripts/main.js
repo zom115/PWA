@@ -663,14 +663,13 @@ const generateSetting = v => {
 }
 const generateElement = () => {
   console.log('generateElement()')
-  console.log(siteList)
   return new Promise(resolve => {
+    document.getElementById`setting`.textContent = 'Setting'
     document.getElementById`site`.textContent = 'Site'
     document.getElementById`market`.textContent = 'Market'
-    document.getElementById`setting`.textContent = 'Setting'
+    SETTING_LIST.forEach(v => generateSetting(v))
     siteList.forEach(v => generateSiteBox(v))
     marketList.forEach(v => generateMarket(v))
-    SETTING_LIST.forEach(v => generateSetting(v))
     resolve()
   })
 }
