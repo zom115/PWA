@@ -523,7 +523,7 @@ const generateContentContainer = building => {
     const progress = createElement(
       'progress', '', `progress-${building.site}-${i}`, '', progressContainer)
     progress.max = building.capacity
-    console.log(progress, progress.value ,v , v.amount)
+    console.log(progress, progress.value, building , v, v.amount)
     v.amount === 0 ? progress.removeAttribute`value` : progress.value = v.amount
     const outputBox = createElement('div', 'box', '', '', contentBox)
     const outputTopContainer = createElement('div', 'container', '', '', outputBox)
