@@ -522,8 +522,8 @@ const generateContentContainer = building => {
     const progressContainer = createElement('div', 'container', '', '', contentBox)
     const progress = createElement(
       'progress', '', `progress-${building.site}-${i}`, '', progressContainer)
-    progress.max = building.capacity
-    progress.value = v.amount
+    // progress.max = building.capacity
+    progress.value = v.amount / building.capacity
     const outputBox = createElement('div', 'box', '', '', contentBox)
     const outputTopContainer = createElement('div', 'container', '', '', outputBox)
     const outputExpandButton = createElement(
